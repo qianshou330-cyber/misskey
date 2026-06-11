@@ -4,7 +4,7 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import type { DataSource } from 'typeorm';
+import { Brackets, type DataSource } from 'typeorm';
 import { DI } from '@/di-symbols.js';
 import { Endpoint } from '@/server/api/endpoint-base.js';
 import { QueryService } from '@/core/QueryService.js';
@@ -36,6 +36,7 @@ export const paramDef = {
 		sinceDate: { type: 'integer' },
 		untilDate: { type: 'integer' },
 		status: { type: 'string', enum: ['all', 'draft', 'pending', 'published', 'rejected'], default: 'pending' },
+		query: { type: 'string', minLength: 1, maxLength: 100 },
 	},
 	required: [],
 } as const;
@@ -55,6 +56,15 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			if (ps.status !== 'all') {
 				query.andWhere('resource.status = :status', { status: ps.status });
+			}
+
+			if (ps.query) {
+				query.andWhere(new Brackets(qb => {
+					qb.where('resource.name ILIKE :query')
+						.orWhere('resource.packageName ILIKE :query')
+						.orWhere('driveFile.name ILIKE :query')
+						.orWhere('resource.userId = :userId');
+				}), { query: `%${ps.query}%`, userId: ps.query });
 			}
 
 			const resources = await query.limit(ps.limit).getMany();

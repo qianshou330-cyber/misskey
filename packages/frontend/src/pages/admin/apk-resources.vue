@@ -5,28 +5,38 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 <template>
 <PageWithHeader>
-	<div class="_spacer" style="--MI_SPACER-w: 900px;">
+	<div class="_spacer" style="--MI_SPACER-w: 980px;">
 		<div :class="$style.root">
-			<div :class="$style.toolbar">
-				<MkButton
-					v-for="item in statusTabs"
-					:key="item.value"
-					:primary="status === item.value"
-					rounded
-					@click="setStatus(item.value)"
-				>
-					{{ item.label }}
-				</MkButton>
-			</div>
+			<section :class="$style.toolbar">
+				<div :class="$style.statusTabs">
+					<MkButton
+						v-for="item in statusTabs"
+						:key="item.value"
+						:primary="status === item.value"
+						rounded
+						@click="setStatus(item.value)"
+					>
+						{{ item.label }}
+					</MkButton>
+				</div>
 
-			<div v-if="loading" :class="$style.empty">
+				<div :class="$style.searchRow">
+					<MkInput v-model="queryInput" :class="$style.search" placeholder="搜索资源名、包名、文件名或作者 ID" @keydown.enter="applySearch">
+						<template #prefix><i class="ti ti-search"></i></template>
+					</MkInput>
+					<MkButton rounded :disabled="loading" @click="applySearch">搜索</MkButton>
+					<MkButton v-if="query" rounded :disabled="loading" @click="clearSearch">清空</MkButton>
+				</div>
+			</section>
+
+			<div v-if="loading && resources.length === 0" :class="$style.empty">
 				<i class="ti ti-loader"></i>
 				<span>加载中...</span>
 			</div>
 
 			<div v-else-if="resources.length === 0" :class="$style.empty">
 				<i class="ti ti-package"></i>
-				<span>暂无 APK 资源</span>
+				<span>{{ emptyText }}</span>
 			</div>
 
 			<div v-else :class="$style.list">
@@ -45,7 +55,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 						<p v-if="resource.description" :class="$style.description">{{ resource.description }}</p>
 						<div :class="$style.ids">
 							<span>资源 ID: {{ resource.id }}</span>
-							<span>用户 ID: {{ resource.userId }}</span>
+							<span>作者 ID: {{ resource.userId }}</span>
 						</div>
 					</div>
 
@@ -77,8 +87,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import MkButton from '@/components/MkButton.vue';
+import MkInput from '@/components/MkInput.vue';
 import * as os from '@/os.js';
 import { definePage } from '@/page.js';
 import { misskeyApi } from '@/utility/misskey-api.js';
@@ -94,9 +105,13 @@ const statusTabs: { value: AdminApkResourceStatus; label: string }[] = [
 ];
 
 const status = ref<AdminApkResourceStatus>('pending');
+const query = ref('');
+const queryInput = ref('');
 const resources = ref<ApkResource[]>([]);
 const loading = ref(false);
 const busyResourceId = ref<string | null>(null);
+
+const emptyText = computed(() => query.value ? '没有匹配的 APK 资源' : '暂无 APK 资源');
 
 function statusText(value: ApkResourceStatus): string {
 	switch (value) {
@@ -107,14 +122,19 @@ function statusText(value: ApkResourceStatus): string {
 	}
 }
 
+function requestParams(untilId?: string) {
+	return {
+		limit: 20,
+		status: status.value,
+		...(query.value ? { query: query.value } : {}),
+		...(untilId ? { untilId } : {}),
+	};
+}
+
 async function load(reset = false) {
 	loading.value = true;
 	try {
-		const items = await misskeyApi<ApkResource[]>('admin/apk/resources/list', {
-			limit: 20,
-			status: status.value,
-			...(reset || resources.value.length === 0 ? {} : { untilId: resources.value.at(-1)?.id }),
-		});
+		const items = await misskeyApi<ApkResource[]>('admin/apk/resources/list', requestParams(reset ? undefined : resources.value.at(-1)?.id));
 
 		resources.value = reset ? items : [...resources.value, ...items];
 	} finally {
@@ -128,6 +148,19 @@ function loadMore() {
 
 function setStatus(value: AdminApkResourceStatus) {
 	status.value = value;
+	resources.value = [];
+	return load(true);
+}
+
+function applySearch() {
+	query.value = queryInput.value.trim();
+	resources.value = [];
+	return load(true);
+}
+
+function clearSearch() {
+	query.value = '';
+	queryInput.value = '';
 	resources.value = [];
 	return load(true);
 }
@@ -178,20 +211,32 @@ definePage(() => ({
 	gap: var(--MI-margin);
 }
 
-.toolbar,
+.toolbar {
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding: 12px 0;
+	background: var(--MI_THEME-bg);
+}
+
+.statusTabs,
 .actions,
-.more {
+.more,
+.searchRow {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 10px;
 }
 
-.toolbar {
-	position: sticky;
-	top: 0;
-	z-index: 1;
-	padding: 12px 0;
-	background: var(--MI_THEME-bg);
+.searchRow {
+	align-items: center;
+}
+
+.search {
+	flex: 1 1 280px;
 }
 
 .list {

@@ -16,6 +16,7 @@ type ApkResource = {
 	driveFileId: string;
 	downloadCount: number;
 	name: string;
+	packageName: string | null;
 };
 
 describe('APK resources', () => {
@@ -62,6 +63,20 @@ describe('APK resources', () => {
 		assert.strictEqual(resource.status, 'pending');
 		assert.strictEqual(resource.downloadCount, 0);
 
+		const hiddenFromPublicList = await api('apk/resources/list', {
+			query: 'NexusHub Smoke',
+		}, bob);
+		assert.strictEqual(hiddenFromPublicList.status, 200);
+		assert.strictEqual((hiddenFromPublicList.body as ApkResource[]).some(item => item.id === resource.id), false);
+
+		const visibleInOwnerPendingList = await api('apk/resources/list', {
+			owner: 'me',
+			status: 'pending',
+			query: 'com.nexushub.smoke',
+		}, alice);
+		assert.strictEqual(visibleInOwnerPendingList.status, 200);
+		assert.strictEqual((visibleInOwnerPendingList.body as ApkResource[]).some(item => item.id === resource.id), true);
+
 		const hiddenFromOtherUser = await api('apk/resources/show', {
 			resourceId: resource.id,
 		}, bob);
@@ -93,6 +108,12 @@ describe('APK resources', () => {
 		assert.strictEqual(otherUserDownload.status, 200);
 		assert.strictEqual(otherUserDownload.body.downloadCount, 1);
 
+		const visibleInPublicSearch = await api('apk/resources/list', {
+			query: 'nexushub',
+		}, bob);
+		assert.strictEqual(visibleInPublicSearch.status, 200);
+		assert.strictEqual((visibleInPublicSearch.body as ApkResource[]).some(item => item.id === resource.id), true);
+
 		const rejected = await api('admin/apk/resources/update-status', {
 			resourceId: resource.id,
 			status: 'rejected',
@@ -109,6 +130,13 @@ describe('APK resources', () => {
 		}, alice);
 		assert.strictEqual(resubmitted.status, 200);
 		assert.strictEqual((resubmitted.body as ApkResource).status, 'pending');
+
+		const visibleInAdminSearch = await api('admin/apk/resources/list', {
+			status: 'pending',
+			query: 'Resubmitted',
+		}, alice);
+		assert.strictEqual(visibleInAdminSearch.status, 200);
+		assert.strictEqual((visibleInAdminSearch.body as ApkResource[]).some(item => item.id === resource.id), true);
 
 		const deleted = await api('admin/apk/resources/delete', {
 			resourceId: resource.id,

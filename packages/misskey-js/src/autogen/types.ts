@@ -7157,6 +7157,7 @@ export interface operations {
                      * @enum {string}
                      */
                     status?: 'all' | 'draft' | 'pending' | 'published' | 'rejected';
+                    query?: string;
                 };
             };
         };
@@ -14559,6 +14560,17 @@ export interface operations {
                     untilId?: string;
                     sinceDate?: number;
                     untilDate?: number;
+                    /**
+                     * @default all
+                     * @enum {string}
+                     */
+                    owner?: 'all' | 'me';
+                    /**
+                     * @default all
+                     * @enum {string}
+                     */
+                    status?: 'all' | 'draft' | 'pending' | 'published' | 'rejected';
+                    query?: string;
                 };
             };
         };

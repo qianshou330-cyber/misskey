@@ -34,6 +34,9 @@ export const paramDef = {
 		untilId: { type: 'string', format: 'misskey:id' },
 		sinceDate: { type: 'integer' },
 		untilDate: { type: 'integer' },
+		owner: { type: 'string', enum: ['all', 'me'], default: 'all' },
+		status: { type: 'string', enum: ['all', 'draft', 'pending', 'published', 'rejected'], default: 'all' },
+		query: { type: 'string', minLength: 1, maxLength: 100 },
 	},
 	required: [],
 } as const;
@@ -49,11 +52,25 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 	) {
 		super(meta, paramDef, async (ps, me) => {
 			const query = this.queryService.makePaginationQuery(this.db.getRepository(MiApkResource).createQueryBuilder('resource'), ps.sinceId, ps.untilId, ps.sinceDate, ps.untilDate)
-				.innerJoinAndSelect('resource.driveFile', 'driveFile')
-				.andWhere(new Brackets(qb => {
-					qb.where('resource.status = :status', { status: 'published' })
-						.orWhere('resource.userId = :userId', { userId: me.id });
-				}));
+				.innerJoinAndSelect('resource.driveFile', 'driveFile');
+
+			if (ps.owner === 'me') {
+				query.andWhere('resource.userId = :userId', { userId: me.id });
+
+				if (ps.status !== 'all') {
+					query.andWhere('resource.status = :status', { status: ps.status });
+				}
+			} else {
+				query.andWhere('resource.status = :status', { status: 'published' });
+			}
+
+			if (ps.query) {
+				query.andWhere(new Brackets(qb => {
+					qb.where('resource.name ILIKE :query')
+						.orWhere('resource.packageName ILIKE :query')
+						.orWhere('driveFile.name ILIKE :query');
+				}), { query: `%${ps.query}%` });
+			}
 
 			const resources = await query.limit(ps.limit).getMany();
 
