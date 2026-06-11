@@ -114,6 +114,7 @@ export const DEFAULT_POLICIES: RolePolicies = {
 	uploadableFileTypes: [
 		'text/*',
 		'application/json',
+		'application/vnd.android.package-archive',
 		'image/*',
 		'video/*',
 		'audio/*',
