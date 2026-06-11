@@ -26,9 +26,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 			<p :class="$style.labelText">{{ i18n.ts.sensitive }}</p>
 		</div>
 
-		<MkDriveFileThumbnail :class="$style.thumbnail" :file="file" fit="contain"/>
+		<NxApkResourceCard v-if="isApk" :file="file"/>
+		<MkDriveFileThumbnail v-else :class="$style.thumbnail" :file="file" fit="contain"/>
 
-		<p :class="$style.name">
+		<p v-if="!isApk" :class="$style.name">
 			<span>{{ file.name.lastIndexOf('.') != -1 ? file.name.substring(0, file.name.lastIndexOf('.')) : file.name }}</span>
 			<span v-if="file.name.lastIndexOf('.') != -1" style="opacity: 0.5;">{{ file.name.substring(file.name.lastIndexOf('.')) }}</span>
 		</p>
@@ -40,6 +41,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 import { computed, ref } from 'vue';
 import * as Misskey from 'misskey-js';
 import MkDriveFileThumbnail from '@/components/MkDriveFileThumbnail.vue';
+import NxApkResourceCard from '@/components/NxApkResourceCard.vue';
 import bytes from '@/filters/bytes.js';
 import * as os from '@/os.js';
 import { i18n } from '@/i18n.js';
@@ -63,6 +65,7 @@ const emit = defineEmits<{
 const isDragging = ref(false);
 
 const title = computed(() => `${props.file.name}\n${props.file.type} ${bytes(props.file.size)}`);
+const isApk = computed(() => props.file.name.toLowerCase().endsWith('.apk') || props.file.type === 'application/vnd.android.package-archive');
 
 function onContextmenu(ev: PointerEvent) {
 	os.contextMenu(getDriveFileMenu(props.file, props.folder), ev);

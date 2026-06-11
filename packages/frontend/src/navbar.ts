@@ -44,9 +44,21 @@ export const navbarItemDef = reactive<{
 	},
 	drive: {
 		title: i18n.ts.drive,
+		icon: 'ti ti-packages',
+		show: computed(() => $i != null),
+		to: '/resources',
+	},
+	driveManager: {
+		title: '文件管理',
 		icon: 'ti ti-cloud',
 		show: computed(() => $i != null),
 		to: '/my/drive',
+	},
+	apkUpload: {
+		title: '上传 APK',
+		icon: 'ti ti-package-import',
+		show: computed(() => $i != null),
+		to: '/resources/upload',
 	},
 	followRequests: {
 		title: i18n.ts.followRequests,

@@ -157,6 +157,11 @@ const menuDef = computed<SuperMenuDef[]>(() => [{
 		to: '/admin/files',
 		active: currentPage.value?.route.name === 'files',
 	}, {
+		icon: 'ti ti-packages',
+		text: 'APK 资源审核',
+		to: '/admin/apk-resources',
+		active: currentPage.value?.route.name === 'apk-resources',
+	}, {
 		icon: 'ti ti-speakerphone',
 		text: i18n.ts.announcements,
 		to: '/admin/announcements',

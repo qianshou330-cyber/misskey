@@ -53,6 +53,18 @@ export const ROUTE_DEF = [{
 	path: '/clips/:clipId',
 	component: page(() => import('@/pages/clip.vue')),
 }, {
+	path: '/resources',
+	component: page(() => import('@/pages/resources.vue')),
+	loginRequired: true,
+}, {
+	path: '/resources/upload',
+	component: page(() => import('@/pages/apk-upload.vue')),
+	loginRequired: true,
+}, {
+	path: '/resources/:fileId',
+	component: page(() => import('@/pages/apk-detail.vue')),
+	loginRequired: true,
+}, {
 	path: '/chat',
 	component: chatPage(() => import('@/pages/chat/home.vue')),
 	loginRequired: true,
@@ -418,6 +430,10 @@ export const ROUTE_DEF = [{
 		path: '/files',
 		name: 'files',
 		component: page(() => import('@/pages/admin/files.vue')),
+	}, {
+		path: '/apk-resources',
+		name: 'apk-resources',
+		component: page(() => import('@/pages/admin/apk-resources.vue')),
 	}, {
 		path: '/federation',
 		name: 'federation',
