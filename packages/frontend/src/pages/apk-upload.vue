@@ -27,6 +27,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 					</MkInput>
 					<MkInput v-model="packageName" :disabled="uploading" placeholder="com.example.app">
 						<template #label>包名</template>
+						<template #caption>{{ packageNameCaption }}</template>
 					</MkInput>
 					<div :class="$style.columns">
 						<MkInput v-model="versionName" :disabled="uploading" placeholder="1.0.0">
@@ -109,7 +110,9 @@ const versionCode = ref<number | null>(null);
 const description = ref('');
 const changelog = ref('');
 
-const canSubmit = computed(() => selectedFile.value != null && name.value.trim().length > 0 && !uploading.value);
+const packageNameValid = computed(() => packageName.value.trim().length === 0 || /^[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z][a-zA-Z0-9_]*)+$/.test(packageName.value.trim()));
+const packageNameCaption = computed(() => packageNameValid.value ? '例如：com.example.app' : '包名格式不正确，应包含至少两段并以点分隔。');
+const canSubmit = computed(() => selectedFile.value != null && name.value.trim().length > 0 && packageNameValid.value && !uploading.value);
 
 function chooseFile() {
 	fileInput.value?.click();
@@ -129,6 +132,14 @@ function onFileChange(ev: Event) {
 		os.alert({
 			type: 'warning',
 			text: '请选择 .apk 文件。',
+		});
+		return;
+	}
+
+	if (file.size > 200 * 1024 * 1024) {
+		os.alert({
+			type: 'warning',
+			text: 'APK 文件不能超过 200 MiB。',
 		});
 		return;
 	}

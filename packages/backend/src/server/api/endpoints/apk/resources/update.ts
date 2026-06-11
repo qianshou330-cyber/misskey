@@ -14,7 +14,7 @@ import { MiApkResource } from '@/models/ApkResource.js';
 import { MiApkResourceVersion } from '@/models/ApkResourceVersion.js';
 import { MiDriveFile } from '@/models/DriveFile.js';
 import { ApiError } from '../../../error.js';
-import { packedApkResourceSchema, packApkResource, isScreenshotDriveFile } from '../../../apk-resource-utils.js';
+import { packedApkResourceSchema, packApkResource, isScreenshotDriveFile, isValidPackageName } from '../../../apk-resource-utils.js';
 
 export const meta = {
 	tags: ['apk'],
@@ -35,6 +35,11 @@ export const meta = {
 			message: 'No such APK resource.',
 			code: 'NO_SUCH_RESOURCE',
 			id: 'bbfb9b6c-73ae-4382-ae6d-d173e77ad0f9',
+		},
+		invalidPackageName: {
+			message: 'Invalid package name.',
+			code: 'INVALID_PACKAGE_NAME',
+			id: '0335bfc6-2130-4627-918e-3d51c4668a66',
 		},
 	},
 } as const;
@@ -74,6 +79,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			});
 
 			if (resource == null) throw new ApiError(meta.errors.noSuchResource);
+			if (ps.packageName != null && !isValidPackageName(ps.packageName)) throw new ApiError(meta.errors.invalidPackageName);
 
 			const oldVersionName = resource.versionName;
 			const oldVersionCode = resource.versionCode;

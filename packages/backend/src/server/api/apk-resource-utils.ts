@@ -9,6 +9,8 @@ import type { MiDriveFile } from '@/models/DriveFile.js';
 import { DriveFileEntityService } from '@/core/entities/DriveFileEntityService.js';
 
 export const APK_MIME = 'application/vnd.android.package-archive';
+export const APK_MAX_BYTES = 200 * 1024 * 1024;
+const APK_PACKAGE_NAME_RE = /^[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z][a-zA-Z0-9_]*)+$/;
 
 export function isApkDriveFile(file: MiDriveFile): boolean {
 	return file.name.toLowerCase().endsWith('.apk') || file.type === APK_MIME;
@@ -16,6 +18,10 @@ export function isApkDriveFile(file: MiDriveFile): boolean {
 
 export function isScreenshotDriveFile(file: MiDriveFile): boolean {
 	return file.type.startsWith('image/');
+}
+
+export function isValidPackageName(packageName: string): boolean {
+	return APK_PACKAGE_NAME_RE.test(packageName);
 }
 
 export const packedApkResourceSchema = {

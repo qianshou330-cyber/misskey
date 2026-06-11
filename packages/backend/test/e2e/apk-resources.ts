@@ -61,6 +61,14 @@ describe('APK resources', () => {
 	}, 1000 * 60 * 2);
 
 	test('resource review flow and visibility rules', async () => {
+		const invalidPackageName = await api('apk/resources/create', {
+			driveFileId: apkFile.id,
+			name: 'Invalid Package Name APK',
+			packageName: 'invalid-package',
+		}, alice);
+		assert.strictEqual(invalidPackageName.status, 400);
+		assert.strictEqual(castAsError(invalidPackageName.body as any).error.code, 'INVALID_PACKAGE_NAME');
+
 		const created = await api('apk/resources/create', {
 			driveFileId: apkFile.id,
 			name: 'NexusHub Smoke APK',

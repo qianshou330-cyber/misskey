@@ -103,6 +103,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 					</MkInput>
 					<MkInput v-model="editPackageName" :disabled="saving" placeholder="com.example.app">
 						<template #label>包名</template>
+						<template #caption>{{ editPackageNameCaption }}</template>
 					</MkInput>
 					<div :class="$style.columns">
 						<MkInput v-model="editVersionName" :disabled="saving" placeholder="1.0.0">
@@ -133,7 +134,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 						</div>
 					</div>
 				</div>
-				<MkButton primary rounded :disabled="editName.trim().length === 0" :wait="saving" @click="saveMetadata">
+				<MkButton primary rounded :disabled="editName.trim().length === 0 || !editPackageNameValid" :wait="saving" @click="saveMetadata">
 					<i class="ti ti-device-floppy"></i> {{ saveButtonText }}
 				</MkButton>
 			</section>
@@ -186,6 +187,8 @@ const reviewStatusText = computed(() => {
 	return '';
 });
 const saveButtonText = computed(() => resource.value?.status === 'rejected' ? '保存并重新提交' : '保存');
+const editPackageNameValid = computed(() => editPackageName.value.trim().length === 0 || /^[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z][a-zA-Z0-9_]*)+$/.test(editPackageName.value.trim()));
+const editPackageNameCaption = computed(() => editPackageNameValid.value ? '例如：com.example.app' : '包名格式不正确，应包含至少两段并以点分隔。');
 const statusText = computed(() => {
 	switch (resource.value?.status) {
 		case 'published': return '已发布';

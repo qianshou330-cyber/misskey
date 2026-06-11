@@ -14,7 +14,7 @@ import { MiApkResource } from '@/models/ApkResource.js';
 import { MiApkResourceVersion } from '@/models/ApkResourceVersion.js';
 import { MiDriveFile } from '@/models/DriveFile.js';
 import { ApiError } from '../../../error.js';
-import { isApkDriveFile, isScreenshotDriveFile, packApkResource, packedApkResourceSchema } from '../../../apk-resource-utils.js';
+import { APK_MAX_BYTES, isApkDriveFile, isScreenshotDriveFile, isValidPackageName, packApkResource, packedApkResourceSchema } from '../../../apk-resource-utils.js';
 
 export const meta = {
 	tags: ['apk'],
@@ -40,6 +40,16 @@ export const meta = {
 			message: 'Unsupported file type.',
 			code: 'UNSUPPORTED_FILE_TYPE',
 			id: '78e631f8-2d2e-4e74-ae7a-0a6455a18d34',
+		},
+		fileTooLarge: {
+			message: 'APK file is too large.',
+			code: 'FILE_TOO_LARGE',
+			id: '82ebd723-a47b-46b5-b20a-397f08bd6a1f',
+		},
+		invalidPackageName: {
+			message: 'Invalid package name.',
+			code: 'INVALID_PACKAGE_NAME',
+			id: '3ba4ce17-b8d6-4a58-b13f-f6ad73d2a7f0',
 		},
 		alreadyExists: {
 			message: 'APK resource already exists for this file.',
@@ -83,6 +93,8 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			const file = await filesRepository.findOneBy({ id: ps.driveFileId, userId: me.id });
 			if (file == null) throw new ApiError(meta.errors.noSuchFile);
 			if (!isApkDriveFile(file)) throw new ApiError(meta.errors.unsupportedFileType);
+			if (file.size > APK_MAX_BYTES) throw new ApiError(meta.errors.fileTooLarge);
+			if (ps.packageName != null && !isValidPackageName(ps.packageName)) throw new ApiError(meta.errors.invalidPackageName);
 
 			const exists = await resourcesRepository.existsBy({ driveFileId: file.id });
 			if (exists) throw new ApiError(meta.errors.alreadyExists);
