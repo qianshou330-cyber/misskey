@@ -128,6 +128,24 @@ type AdminAnnouncementsListResponse = operations['admin___announcements___list']
 type AdminAnnouncementsUpdateRequest = operations['admin___announcements___update']['requestBody']['content']['application/json'];
 
 // @public (undocumented)
+type AdminApkResourcesDeleteRequest = operations['admin___apk___resources___delete']['requestBody']['content']['application/json'];
+
+// @public (undocumented)
+type AdminApkResourcesDeleteResponse = operations['admin___apk___resources___delete']['responses']['200']['content']['application/json'];
+
+// @public (undocumented)
+type AdminApkResourcesListRequest = operations['admin___apk___resources___list']['requestBody']['content']['application/json'];
+
+// @public (undocumented)
+type AdminApkResourcesListResponse = operations['admin___apk___resources___list']['responses']['200']['content']['application/json'];
+
+// @public (undocumented)
+type AdminApkResourcesUpdateStatusRequest = operations['admin___apk___resources___update-status']['requestBody']['content']['application/json'];
+
+// @public (undocumented)
+type AdminApkResourcesUpdateStatusResponse = operations['admin___apk___resources___update-status']['responses']['200']['content']['application/json'];
+
+// @public (undocumented)
 type AdminAvatarDecorationsCreateRequest = operations['admin___avatar-decorations___create']['requestBody']['content']['application/json'];
 
 // @public (undocumented)
@@ -553,6 +571,39 @@ type APIError = {
     kind: 'client' | 'server';
     info: Record<string, any>;
 };
+
+// @public (undocumented)
+type ApkResourcesCreateRequest = operations['apk___resources___create']['requestBody']['content']['application/json'];
+
+// @public (undocumented)
+type ApkResourcesCreateResponse = operations['apk___resources___create']['responses']['200']['content']['application/json'];
+
+// @public (undocumented)
+type ApkResourcesDeleteRequest = operations['apk___resources___delete']['requestBody']['content']['application/json'];
+
+// @public (undocumented)
+type ApkResourcesDownloadRequest = operations['apk___resources___download']['requestBody']['content']['application/json'];
+
+// @public (undocumented)
+type ApkResourcesDownloadResponse = operations['apk___resources___download']['responses']['200']['content']['application/json'];
+
+// @public (undocumented)
+type ApkResourcesListRequest = operations['apk___resources___list']['requestBody']['content']['application/json'];
+
+// @public (undocumented)
+type ApkResourcesListResponse = operations['apk___resources___list']['responses']['200']['content']['application/json'];
+
+// @public (undocumented)
+type ApkResourcesShowRequest = operations['apk___resources___show']['requestBody']['content']['application/json'];
+
+// @public (undocumented)
+type ApkResourcesShowResponse = operations['apk___resources___show']['responses']['200']['content']['application/json'];
+
+// @public (undocumented)
+type ApkResourcesUpdateRequest = operations['apk___resources___update']['requestBody']['content']['application/json'];
+
+// @public (undocumented)
+type ApkResourcesUpdateResponse = operations['apk___resources___update']['responses']['200']['content']['application/json'];
 
 // @public (undocumented)
 type App = components['schemas']['App'];
@@ -1562,6 +1613,12 @@ declare namespace entities {
         AdminAnnouncementsListRequest,
         AdminAnnouncementsListResponse,
         AdminAnnouncementsUpdateRequest,
+        AdminApkResourcesDeleteRequest,
+        AdminApkResourcesDeleteResponse,
+        AdminApkResourcesListRequest,
+        AdminApkResourcesListResponse,
+        AdminApkResourcesUpdateStatusRequest,
+        AdminApkResourcesUpdateStatusResponse,
         AdminAvatarDecorationsCreateRequest,
         AdminAvatarDecorationsCreateResponse,
         AdminAvatarDecorationsDeleteRequest,
@@ -1691,6 +1748,17 @@ declare namespace entities {
         ApGetResponse,
         ApShowRequest,
         ApShowResponse,
+        ApkResourcesCreateRequest,
+        ApkResourcesCreateResponse,
+        ApkResourcesDeleteRequest,
+        ApkResourcesDownloadRequest,
+        ApkResourcesDownloadResponse,
+        ApkResourcesListRequest,
+        ApkResourcesListResponse,
+        ApkResourcesShowRequest,
+        ApkResourcesShowResponse,
+        ApkResourcesUpdateRequest,
+        ApkResourcesUpdateResponse,
         AppCreateRequest,
         AppCreateResponse,
         AppShowRequest,

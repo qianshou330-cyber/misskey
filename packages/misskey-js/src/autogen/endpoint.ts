@@ -29,6 +29,12 @@ import type {
 	AdminAnnouncementsListRequest,
 	AdminAnnouncementsListResponse,
 	AdminAnnouncementsUpdateRequest,
+	AdminApkResourcesDeleteRequest,
+	AdminApkResourcesDeleteResponse,
+	AdminApkResourcesListRequest,
+	AdminApkResourcesListResponse,
+	AdminApkResourcesUpdateStatusRequest,
+	AdminApkResourcesUpdateStatusResponse,
 	AdminAvatarDecorationsCreateRequest,
 	AdminAvatarDecorationsCreateResponse,
 	AdminAvatarDecorationsDeleteRequest,
@@ -158,6 +164,17 @@ import type {
 	ApGetResponse,
 	ApShowRequest,
 	ApShowResponse,
+	ApkResourcesCreateRequest,
+	ApkResourcesCreateResponse,
+	ApkResourcesDeleteRequest,
+	ApkResourcesDownloadRequest,
+	ApkResourcesDownloadResponse,
+	ApkResourcesListRequest,
+	ApkResourcesListResponse,
+	ApkResourcesShowRequest,
+	ApkResourcesShowResponse,
+	ApkResourcesUpdateRequest,
+	ApkResourcesUpdateResponse,
 	AppCreateRequest,
 	AppCreateResponse,
 	AppShowRequest,
@@ -684,6 +701,9 @@ export type Endpoints = {
 	'admin/announcements/delete': { req: AdminAnnouncementsDeleteRequest; res: EmptyResponse };
 	'admin/announcements/list': { req: AdminAnnouncementsListRequest; res: AdminAnnouncementsListResponse };
 	'admin/announcements/update': { req: AdminAnnouncementsUpdateRequest; res: EmptyResponse };
+	'admin/apk/resources/delete': { req: AdminApkResourcesDeleteRequest; res: AdminApkResourcesDeleteResponse };
+	'admin/apk/resources/list': { req: AdminApkResourcesListRequest; res: AdminApkResourcesListResponse };
+	'admin/apk/resources/update-status': { req: AdminApkResourcesUpdateStatusRequest; res: AdminApkResourcesUpdateStatusResponse };
 	'admin/avatar-decorations/create': { req: AdminAvatarDecorationsCreateRequest; res: AdminAvatarDecorationsCreateResponse };
 	'admin/avatar-decorations/delete': { req: AdminAvatarDecorationsDeleteRequest; res: EmptyResponse };
 	'admin/avatar-decorations/list': { req: AdminAvatarDecorationsListRequest; res: AdminAvatarDecorationsListResponse };
@@ -779,6 +799,12 @@ export type Endpoints = {
 	'antennas/update': { req: AntennasUpdateRequest; res: AntennasUpdateResponse };
 	'ap/get': { req: ApGetRequest; res: ApGetResponse };
 	'ap/show': { req: ApShowRequest; res: ApShowResponse };
+	'apk/resources/create': { req: ApkResourcesCreateRequest; res: ApkResourcesCreateResponse };
+	'apk/resources/delete': { req: ApkResourcesDeleteRequest; res: EmptyResponse };
+	'apk/resources/download': { req: ApkResourcesDownloadRequest; res: ApkResourcesDownloadResponse };
+	'apk/resources/list': { req: ApkResourcesListRequest; res: ApkResourcesListResponse };
+	'apk/resources/show': { req: ApkResourcesShowRequest; res: ApkResourcesShowResponse };
+	'apk/resources/update': { req: ApkResourcesUpdateRequest; res: ApkResourcesUpdateResponse };
 	'app/create': { req: AppCreateRequest; res: AppCreateResponse };
 	'app/show': { req: AppShowRequest; res: AppShowResponse };
 	'auth/accept': { req: AuthAcceptRequest; res: EmptyResponse };
