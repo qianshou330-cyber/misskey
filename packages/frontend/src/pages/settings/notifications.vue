@@ -196,6 +196,10 @@ definePage(() => ({
 </script>
 
 <style lang="scss" module>
+.userItem {
+	padding: 8px 0;
+}
+
 .userItemMain {
 	display: flex;
 }
