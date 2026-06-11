@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="NexusHub">
+  <rect width="256" height="256" rx="56" fill="#07111F"/>
+  <path d="M72 172V84h30l52 88h30V84" fill="none" stroke="#58D8FF" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M72 84h112M72 172h112" fill="none" stroke="#68F5C8" stroke-width="12" stroke-linecap="round" opacity=".72"/>
+</svg>

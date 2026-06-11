@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="MomentCircle">
+  <defs>
+    <linearGradient id="mc-bg" x1="92" y1="68" x2="420" y2="444" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2db7ff"/>
+      <stop offset="0.55" stop-color="#1d9bf0"/>
+      <stop offset="1" stop-color="#0f6fd6"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#mc-bg)"/>
+  <circle cx="380" cy="132" r="38" fill="#ffffff" opacity="0.18"/>
+  <path fill="#ffffff" d="M120 346V166h48l58 86 58-86h48v180h-46V237l-48 72h-24l-48-72v109h-46Zm252 2c-54 0-94-39-94-92s40-92 94-92 94 39 94 92-40 92-94 92Zm0-44c27 0 47-20 47-48s-20-48-47-48-47 20-47 48 20 48 47 48Z"/>
+</svg>

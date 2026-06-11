@@ -1,0 +1,34 @@
+{
+	id: '8d4e6d5e-4f14-40ab-9388-0a9c4d3952b1',
+
+	name: 'NexusHub Dark',
+	author: 'NexusHub',
+
+	base: 'dark',
+
+	props: {
+		accent: '#58D8FF',
+		bg: '#07111F',
+		fg: '#DCEBFF',
+		fgHighlighted: '#FFFFFF',
+		fgOnAccent: '#04111D',
+		fgOnWhite: '#07111F',
+		divider: '#6ED7FF24',
+		panel: '#0D1A2B',
+		panelHighlight: '#132942',
+		popup: '#10243A',
+		navBg: '#050B14',
+		navFg: '#BFD9F7',
+		link: '#7BE7FF',
+		mention: '#A78BFA',
+		mentionMe: '#22D3EE',
+		hashtag: '#68F5C8',
+		renote: '#68F5C8',
+		success: '#34D399',
+		warn: '#FBBF24',
+		error: '#FB7185',
+		buttonBg: '#132942',
+		buttonHoverBg: '#1A3656',
+		inputBorder: '#6ED7FF33',
+	},
+}
