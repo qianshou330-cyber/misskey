@@ -4,6 +4,7 @@
  */
 
 import type { MiApkResource } from '@/models/ApkResource.js';
+import type { MiApkResourceVersion } from '@/models/ApkResourceVersion.js';
 import type { MiDriveFile } from '@/models/DriveFile.js';
 import { DriveFileEntityService } from '@/core/entities/DriveFileEntityService.js';
 
@@ -64,6 +65,27 @@ export const packedApkResourceSchema = {
 	},
 } as const;
 
+export const packedApkResourceVersionSchema = {
+	type: 'object',
+	optional: false,
+	nullable: false,
+	properties: {
+		id: { type: 'string', optional: false, nullable: false, format: 'id' },
+		createdAt: { type: 'string', optional: false, nullable: false, format: 'date-time' },
+		resourceId: { type: 'string', optional: false, nullable: false, format: 'id' },
+		driveFileId: { type: 'string', optional: false, nullable: false, format: 'id' },
+		versionName: { type: 'string', optional: false, nullable: true },
+		versionCode: { type: 'number', optional: false, nullable: true },
+		changelog: { type: 'string', optional: false, nullable: true },
+		file: {
+			type: 'object',
+			optional: false,
+			nullable: false,
+			ref: 'DriveFile',
+		},
+	},
+} as const;
+
 export async function packApkResource(
 	resource: MiApkResource,
 	driveFileEntityService: DriveFileEntityService,
@@ -95,6 +117,28 @@ export async function packApkResource(
 		}),
 		screenshotFiles: await driveFileEntityService.packManyByIds(resource.screenshotFileIds, {
 			detail: false,
+			self: false,
+		}),
+	};
+}
+
+export async function packApkResourceVersion(
+	version: MiApkResourceVersion,
+	driveFileEntityService: DriveFileEntityService,
+) {
+	const driveFile = version.driveFile ?? version.driveFileId;
+
+	return {
+		id: version.id,
+		createdAt: version.createdAt.toISOString(),
+		resourceId: version.resourceId,
+		driveFileId: version.driveFileId,
+		versionName: version.versionName,
+		versionCode: version.versionCode,
+		changelog: version.changelog,
+		file: await driveFileEntityService.pack(driveFile, {
+			detail: true,
+			withUser: true,
 			self: false,
 		}),
 	};

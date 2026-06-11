@@ -175,6 +175,8 @@ import type {
 	ApkResourcesShowResponse,
 	ApkResourcesUpdateRequest,
 	ApkResourcesUpdateResponse,
+	ApkResourcesVersionsRequest,
+	ApkResourcesVersionsResponse,
 	AppCreateRequest,
 	AppCreateResponse,
 	AppShowRequest,
@@ -805,6 +807,7 @@ export type Endpoints = {
 	'apk/resources/list': { req: ApkResourcesListRequest; res: ApkResourcesListResponse };
 	'apk/resources/show': { req: ApkResourcesShowRequest; res: ApkResourcesShowResponse };
 	'apk/resources/update': { req: ApkResourcesUpdateRequest; res: ApkResourcesUpdateResponse };
+	'apk/resources/versions': { req: ApkResourcesVersionsRequest; res: ApkResourcesVersionsResponse };
 	'app/create': { req: AppCreateRequest; res: AppCreateResponse };
 	'app/show': { req: AppShowRequest; res: AppShowResponse };
 	'auth/accept': { req: AuthAcceptRequest; res: EmptyResponse };

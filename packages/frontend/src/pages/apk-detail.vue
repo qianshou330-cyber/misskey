@@ -75,6 +75,25 @@ SPDX-License-Identifier: AGPL-3.0-only
 				</div>
 			</section>
 
+			<section :class="$style.panel">
+				<h2>版本历史</h2>
+				<MkLoading v-if="versionsFetching"/>
+				<div v-else-if="versions.length === 0" :class="$style.versionEmpty">暂无版本记录</div>
+				<div v-else :class="$style.versionList">
+					<article v-for="version in versions" :key="version.id" :class="$style.versionItem">
+						<div>
+							<div :class="$style.versionTitle">{{ version.versionName ?? '未填写版本' }}</div>
+							<div :class="$style.versionMeta">
+								<span>版本号：{{ version.versionCode ?? '待补充' }}</span>
+								<span>{{ new Date(version.createdAt).toLocaleString() }}</span>
+								<span>{{ version.file.name }}</span>
+							</div>
+						</div>
+						<p v-if="version.changelog" :class="$style.changelog">{{ version.changelog }}</p>
+					</article>
+				</div>
+			</section>
+
 			<section v-if="canEdit" :class="$style.panel">
 				<h2>编辑资源信息</h2>
 				<input ref="screenshotsInput" type="file" accept="image/*" multiple :class="$style.input" @change="onScreenshotsChange">
@@ -95,6 +114,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 					</div>
 					<MkTextarea v-model="editDescription" :disabled="saving" tall>
 						<template #label>介绍</template>
+					</MkTextarea>
+					<MkTextarea v-model="editChangelog" :disabled="saving" tall>
+						<template #label>本次更新日志</template>
 					</MkTextarea>
 				</div>
 				<div :class="$style.editScreenshots">
@@ -132,7 +154,7 @@ import * as os from '@/os.js';
 import { misskeyApi } from '@/utility/misskey-api.js';
 import { definePage } from '@/page.js';
 import { $i } from '@/i.js';
-import type { ApkResource, ApkResourceDownload } from '@/types/apk-resource.js';
+import type { ApkResource, ApkResourceDownload, ApkResourceVersion } from '@/types/apk-resource.js';
 
 const props = defineProps<{
 	fileId: string;
@@ -144,12 +166,15 @@ const downloading = ref(false);
 const saving = ref(false);
 const error = ref<unknown>(null);
 const screenshotsInput = ref<HTMLInputElement | null>(null);
+const versions = ref<ApkResourceVersion[]>([]);
+const versionsFetching = ref(false);
 
 const editName = ref('');
 const editPackageName = ref('');
 const editVersionName = ref('');
 const editVersionCode = ref<number | null>(null);
 const editDescription = ref('');
+const editChangelog = ref('');
 const editScreenshotFiles = ref<Misskey.entities.DriveFile[]>([]);
 
 const title = computed(() => resource.value?.name ?? 'APK 资源');
@@ -196,7 +221,21 @@ function hydrateEditForm() {
 	editVersionName.value = resource.value.versionName ?? '';
 	editVersionCode.value = resource.value.versionCode;
 	editDescription.value = resource.value.description ?? '';
+	editChangelog.value = '';
 	editScreenshotFiles.value = [...resource.value.screenshotFiles];
+}
+
+async function fetchVersions() {
+	if (!resource.value) return;
+	versionsFetching.value = true;
+	try {
+		versions.value = await misskeyApi<ApkResourceVersion[]>('apk/resources/versions', {
+			resourceId: resource.value.id,
+			limit: 20,
+		});
+	} finally {
+		versionsFetching.value = false;
+	}
 }
 
 function fetchResource() {
@@ -207,6 +246,7 @@ function fetchResource() {
 	}).then(res => {
 		resource.value = res;
 		hydrateEditForm();
+		return fetchVersions();
 	}).catch(err => {
 		error.value = err;
 	}).finally(() => {
@@ -238,10 +278,12 @@ async function saveMetadata() {
 			packageName: editPackageName.value.trim() || null,
 			versionName: editVersionName.value.trim() || null,
 			versionCode: editVersionCode.value,
+			changelog: editChangelog.value.trim() || null,
 			description: editDescription.value.trim() || null,
 			screenshotFileIds: editScreenshotFiles.value.map(file => file.id),
 		});
 		hydrateEditForm();
+		await fetchVersions();
 	} finally {
 		saving.value = false;
 	}
@@ -391,6 +433,42 @@ definePage(() => ({
 
 .wide {
 	grid-column: 1 / -1;
+}
+
+.versionEmpty {
+	color: color(from var(--MI_THEME-fg) srgb r g b / 0.68);
+}
+
+.versionList {
+	display: grid;
+	gap: 12px;
+}
+
+.versionItem {
+	display: grid;
+	gap: 8px;
+	padding: 14px;
+	border: 1px solid var(--MI_THEME-divider);
+	border-radius: 8px;
+}
+
+.versionTitle {
+	font-weight: 700;
+	color: var(--MI_THEME-fgHighlighted);
+}
+
+.versionMeta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 14px;
+	margin-top: 6px;
+	color: color(from var(--MI_THEME-fg) srgb r g b / 0.68);
+	font-size: 0.92em;
+}
+
+.changelog {
+	margin: 0;
+	white-space: pre-wrap;
 }
 
 .input {

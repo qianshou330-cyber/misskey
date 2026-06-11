@@ -606,6 +606,12 @@ type ApkResourcesUpdateRequest = operations['apk___resources___update']['request
 type ApkResourcesUpdateResponse = operations['apk___resources___update']['responses']['200']['content']['application/json'];
 
 // @public (undocumented)
+type ApkResourcesVersionsRequest = operations['apk___resources___versions']['requestBody']['content']['application/json'];
+
+// @public (undocumented)
+type ApkResourcesVersionsResponse = operations['apk___resources___versions']['responses']['200']['content']['application/json'];
+
+// @public (undocumented)
 type App = components['schemas']['App'];
 
 // @public (undocumented)
@@ -1759,6 +1765,8 @@ declare namespace entities {
         ApkResourcesShowResponse,
         ApkResourcesUpdateRequest,
         ApkResourcesUpdateResponse,
+        ApkResourcesVersionsRequest,
+        ApkResourcesVersionsResponse,
         AppCreateRequest,
         AppCreateResponse,
         AppShowRequest,

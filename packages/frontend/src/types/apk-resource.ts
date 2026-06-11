@@ -33,3 +33,14 @@ export type ApkResourceDownload = {
 	url: string;
 	downloadCount: number;
 };
+
+export type ApkResourceVersion = {
+	id: string;
+	createdAt: string;
+	resourceId: string;
+	driveFileId: string;
+	versionName: string | null;
+	versionCode: number | null;
+	changelog: string | null;
+	file: Misskey.entities.DriveFile;
+};

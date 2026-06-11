@@ -39,6 +39,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<MkTextarea v-model="description" :disabled="uploading" tall>
 						<template #label>介绍</template>
 					</MkTextarea>
+					<MkTextarea v-model="changelog" :disabled="uploading" tall>
+						<template #label>更新日志</template>
+					</MkTextarea>
 				</div>
 
 				<div :class="$style.screenshots">
@@ -104,6 +107,7 @@ const packageName = ref('');
 const versionName = ref('');
 const versionCode = ref<number | null>(null);
 const description = ref('');
+const changelog = ref('');
 
 const canSubmit = computed(() => selectedFile.value != null && name.value.trim().length > 0 && !uploading.value);
 
@@ -176,6 +180,7 @@ async function upload() {
 			packageName: packageName.value.trim() || null,
 			versionName: versionName.value.trim() || null,
 			versionCode: versionCode.value,
+			changelog: changelog.value.trim() || null,
 			description: description.value.trim() || null,
 			screenshotFileIds: screenshotDriveFiles.map(file => file.id),
 		});

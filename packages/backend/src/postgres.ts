@@ -16,6 +16,7 @@ import { MiAbuseReportNotificationRecipient } from '@/models/AbuseReportNotifica
 import { MiAccessToken } from '@/models/AccessToken.js';
 import { MiAd } from '@/models/Ad.js';
 import { MiApkResource } from '@/models/ApkResource.js';
+import { MiApkResourceVersion } from '@/models/ApkResourceVersion.js';
 import { MiAnnouncement } from '@/models/Announcement.js';
 import { MiAnnouncementRead } from '@/models/AnnouncementRead.js';
 import { MiAntenna } from '@/models/Antenna.js';
@@ -210,6 +211,7 @@ export const entities = [
 	MiPage,
 	MiPageLike,
 	MiApkResource,
+	MiApkResourceVersion,
 	MiGalleryPost,
 	MiGalleryLike,
 	MiDriveFile,

@@ -11,6 +11,7 @@ import { Endpoint } from '@/server/api/endpoint-base.js';
 import { IdService } from '@/core/IdService.js';
 import { DriveFileEntityService } from '@/core/entities/DriveFileEntityService.js';
 import { MiApkResource } from '@/models/ApkResource.js';
+import { MiApkResourceVersion } from '@/models/ApkResourceVersion.js';
 import { MiDriveFile } from '@/models/DriveFile.js';
 import { ApiError } from '../../../error.js';
 import { isApkDriveFile, isScreenshotDriveFile, packApkResource, packedApkResourceSchema } from '../../../apk-resource-utils.js';
@@ -56,6 +57,7 @@ export const paramDef = {
 		packageName: { type: 'string', nullable: true, maxLength: 256 },
 		versionName: { type: 'string', nullable: true, maxLength: 128 },
 		versionCode: { type: 'integer', nullable: true, minimum: 0 },
+		changelog: { type: 'string', nullable: true, maxLength: 2048 },
 		description: { type: 'string', nullable: true, maxLength: 2048 },
 		screenshotFileIds: { type: 'array', uniqueItems: true, maxItems: 8, items: {
 			type: 'string', format: 'misskey:id',
@@ -76,6 +78,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		super(meta, paramDef, async (ps, me) => {
 			const filesRepository = this.db.getRepository(MiDriveFile);
 			const resourcesRepository = this.db.getRepository(MiApkResource);
+			const versionsRepository = this.db.getRepository(MiApkResourceVersion);
 
 			const file = await filesRepository.findOneBy({ id: ps.driveFileId, userId: me.id });
 			if (file == null) throw new ApiError(meta.errors.noSuchFile);
@@ -105,6 +108,18 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				screenshotFileIds: screenshotFiles.map(file => file.id),
 				status: 'pending',
 				downloadCount: 0,
+			}));
+
+			await versionsRepository.save(new MiApkResourceVersion({
+				id: this.idService.gen(),
+				createdAt: resource.updatedAt,
+				resourceId: resource.id,
+				resource,
+				driveFileId: file.id,
+				driveFile: file,
+				versionName: resource.versionName,
+				versionCode: resource.versionCode,
+				changelog: ps.changelog?.trim() || null,
 			}));
 
 			return await packApkResource(resource, this.driveFileEntityService);

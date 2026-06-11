@@ -1103,6 +1103,15 @@ export type paths = {
          */
         post: operations['apk___resources___update'];
     };
+    '/apk/resources/versions': {
+        /**
+         * apk/resources/versions
+         * @description No description provided.
+         *
+         *     **Credential required**: *Yes* / **Permission**: *read:drive*
+         */
+        post: operations['apk___resources___versions'];
+    };
     '/app/create': {
         /**
          * app/create
@@ -14338,6 +14347,7 @@ export interface operations {
                     packageName?: string | null;
                     versionName?: string | null;
                     versionCode?: number | null;
+                    changelog?: string | null;
                     description?: string | null;
                     screenshotFileIds?: string[];
                 };
@@ -14781,6 +14791,7 @@ export interface operations {
                     packageName?: string | null;
                     versionName?: string | null;
                     versionCode?: number | null;
+                    changelog?: string | null;
                     description?: string | null;
                     screenshotFileIds?: string[];
                 };
@@ -14861,6 +14872,91 @@ export interface operations {
             };
             /** @description Too many requests */
             429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Error'];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Error'];
+                };
+            };
+        };
+    };
+    apk___resources___versions: {
+        requestBody: {
+            content: {
+                'application/json': {
+                    /** Format: misskey:id */
+                    resourceId: string;
+                    /** @default 20 */
+                    limit?: number;
+                    /** Format: misskey:id */
+                    sinceId?: string;
+                    /** Format: misskey:id */
+                    untilId?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK (with results) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': {
+                        /** Format: id */
+                        id: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: id */
+                        resourceId: string;
+                        /** Format: id */
+                        driveFileId: string;
+                        versionName: string | null;
+                        versionCode: number | null;
+                        changelog: string | null;
+                        file: components['schemas']['DriveFile'];
+                    }[];
+                };
+            };
+            /** @description Client error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Error'];
+                };
+            };
+            /** @description Authentication error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Error'];
+                };
+            };
+            /** @description Forbidden error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Error'];
+                };
+            };
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };

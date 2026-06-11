@@ -129,6 +129,7 @@ export * as 'apk/resources/download' from './endpoints/apk/resources/download.js
 export * as 'apk/resources/list' from './endpoints/apk/resources/list.js';
 export * as 'apk/resources/show' from './endpoints/apk/resources/show.js';
 export * as 'apk/resources/update' from './endpoints/apk/resources/update.js';
+export * as 'apk/resources/versions' from './endpoints/apk/resources/versions.js';
 export * as 'ap/get' from './endpoints/ap/get.js';
 export * as 'ap/show' from './endpoints/ap/show.js';
 export * as 'app/create' from './endpoints/app/create.js';

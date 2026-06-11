@@ -8,8 +8,10 @@ import { Inject, Injectable } from '@nestjs/common';
 import type { DataSource } from 'typeorm';
 import { DI } from '@/di-symbols.js';
 import { Endpoint } from '@/server/api/endpoint-base.js';
+import { IdService } from '@/core/IdService.js';
 import { DriveFileEntityService } from '@/core/entities/DriveFileEntityService.js';
 import { MiApkResource } from '@/models/ApkResource.js';
+import { MiApkResourceVersion } from '@/models/ApkResourceVersion.js';
 import { MiDriveFile } from '@/models/DriveFile.js';
 import { ApiError } from '../../../error.js';
 import { packedApkResourceSchema, packApkResource, isScreenshotDriveFile } from '../../../apk-resource-utils.js';
@@ -45,6 +47,7 @@ export const paramDef = {
 		packageName: { type: 'string', nullable: true, maxLength: 256 },
 		versionName: { type: 'string', nullable: true, maxLength: 128 },
 		versionCode: { type: 'integer', nullable: true, minimum: 0 },
+		changelog: { type: 'string', nullable: true, maxLength: 2048 },
 		description: { type: 'string', nullable: true, maxLength: 2048 },
 		screenshotFileIds: { type: 'array', uniqueItems: true, maxItems: 8, items: {
 			type: 'string', format: 'misskey:id',
@@ -59,16 +62,21 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		@Inject(DI.db)
 		private db: DataSource,
 
+		private idService: IdService,
 		private driveFileEntityService: DriveFileEntityService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
 			const repository = this.db.getRepository(MiApkResource);
+			const versionsRepository = this.db.getRepository(MiApkResourceVersion);
 			const resource = await repository.findOne({
 				where: { id: ps.resourceId, userId: me.id },
 				relations: { driveFile: true },
 			});
 
 			if (resource == null) throw new ApiError(meta.errors.noSuchResource);
+
+			const oldVersionName = resource.versionName;
+			const oldVersionCode = resource.versionCode;
 
 			resource.updatedAt = new Date();
 			if (resource.status === 'rejected') {
@@ -95,6 +103,22 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			}
 
 			const saved = await repository.save(resource);
+			const versionChanged = oldVersionName !== saved.versionName || oldVersionCode !== saved.versionCode;
+			const changelog = ps.changelog?.trim() || null;
+			if (versionChanged || changelog != null) {
+				await versionsRepository.save(new MiApkResourceVersion({
+					id: this.idService.gen(),
+					createdAt: saved.updatedAt,
+					resourceId: saved.id,
+					resource: saved,
+					driveFileId: saved.driveFileId,
+					driveFile: saved.driveFile,
+					versionName: saved.versionName,
+					versionCode: saved.versionCode,
+					changelog,
+				}));
+			}
+
 			return await packApkResource(saved, this.driveFileEntityService);
 		});
 	}
