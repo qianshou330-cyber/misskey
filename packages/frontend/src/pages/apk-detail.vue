@@ -55,6 +55,11 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<h2>审核状态</h2>
 					<p><i :class="statusIcon"></i> {{ statusText }}</p>
 					<p>{{ statusDescription }}</p>
+					<div v-if="resource.rejectionReason || resource.reviewNote || resource.reviewedAt" :class="$style.reviewInfo">
+						<p v-if="resource.rejectionReason">拒绝原因：{{ resource.rejectionReason }}</p>
+						<p v-if="resource.reviewNote">审核备注：{{ resource.reviewNote }}</p>
+						<p v-if="resource.reviewedAt">审核时间：{{ new Date(resource.reviewedAt).toLocaleString() }}</p>
+					</div>
 				</div>
 				<div :class="$style.panel">
 					<h2>资源信息</h2>
@@ -368,6 +373,20 @@ definePage(() => ({
 .panel p {
 	margin: 8px 0 0;
 	color: color(from var(--MI_THEME-fg) srgb r g b / 0.78);
+}
+
+.reviewInfo {
+	display: grid;
+	gap: 4px;
+	margin-top: 12px;
+	padding: 10px 12px;
+	border-radius: 8px;
+	background: color(from var(--MI_THEME-accent) srgb r g b / 0.08);
+}
+
+.reviewInfo p {
+	margin: 0;
+	white-space: pre-wrap;
 }
 
 .wide {

@@ -73,6 +73,10 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			resource.updatedAt = new Date();
 			if (resource.status === 'rejected') {
 				resource.status = 'pending';
+				resource.reviewerId = null;
+				resource.reviewedAt = null;
+				resource.reviewNote = null;
+				resource.rejectionReason = null;
 			}
 			resource.name = ps.name ?? resource.name;
 			resource.packageName = ps.packageName === undefined ? resource.packageName : ps.packageName;

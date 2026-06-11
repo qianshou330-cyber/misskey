@@ -28,6 +28,11 @@ export const meta = {
 			code: 'NO_SUCH_RESOURCE',
 			id: '9cfcd9ac-91d9-4d57-8f29-86bb5be70b4e',
 		},
+		rejectionReasonRequired: {
+			message: 'Rejection reason is required.',
+			code: 'REJECTION_REASON_REQUIRED',
+			id: 'f31a2929-04ce-43db-bb70-c04578472999',
+		},
 	},
 } as const;
 
@@ -36,6 +41,8 @@ export const paramDef = {
 	properties: {
 		resourceId: { type: 'string', format: 'misskey:id' },
 		status: { type: 'string', enum: ['pending', 'published', 'rejected'] },
+		rejectionReason: { type: 'string', nullable: true, maxLength: 2048 },
+		reviewNote: { type: 'string', nullable: true, maxLength: 2048 },
 	},
 	required: ['resourceId', 'status'],
 } as const;
@@ -48,7 +55,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 		private driveFileEntityService: DriveFileEntityService,
 	) {
-		super(meta, paramDef, async (ps) => {
+		super(meta, paramDef, async (ps, me) => {
 			const repository = this.db.getRepository(MiApkResource);
 			const resource = await repository.findOne({
 				where: { id: ps.resourceId },
@@ -56,9 +63,14 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			});
 
 			if (resource == null) throw new ApiError(meta.errors.noSuchResource);
+			if (ps.status === 'rejected' && !ps.rejectionReason?.trim()) throw new ApiError(meta.errors.rejectionReasonRequired);
 
 			resource.status = ps.status;
 			resource.updatedAt = new Date();
+			resource.reviewerId = me.id;
+			resource.reviewedAt = new Date();
+			resource.reviewNote = ps.reviewNote?.trim() || null;
+			resource.rejectionReason = ps.status === 'rejected' ? ps.rejectionReason?.trim() ?? null : null;
 
 			const saved = await repository.save(resource);
 			return await packApkResource(saved, this.driveFileEntityService);

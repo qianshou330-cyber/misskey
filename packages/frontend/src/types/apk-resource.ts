@@ -22,6 +22,10 @@ export type ApkResource = {
 	screenshotFiles: Misskey.entities.DriveFile[];
 	status: ApkResourceStatus;
 	downloadCount: number;
+	reviewerId: string | null;
+	reviewedAt: string | null;
+	reviewNote: string | null;
+	rejectionReason: string | null;
 	file: Misskey.entities.DriveFile;
 };
 

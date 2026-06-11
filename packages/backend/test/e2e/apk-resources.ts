@@ -17,6 +17,10 @@ type ApkResource = {
 	downloadCount: number;
 	name: string;
 	packageName: string | null;
+	rejectionReason: string | null;
+	reviewNote: string | null;
+	reviewerId: string | null;
+	reviewedAt: string | null;
 };
 
 describe('APK resources', () => {
@@ -117,9 +121,16 @@ describe('APK resources', () => {
 		const rejected = await api('admin/apk/resources/update-status', {
 			resourceId: resource.id,
 			status: 'rejected',
+			rejectionReason: 'metadata is incomplete',
+			reviewNote: 'please resubmit with a clearer version name',
 		}, alice);
 		assert.strictEqual(rejected.status, 200);
-		assert.strictEqual((rejected.body as ApkResource).status, 'rejected');
+		const rejectedResource = rejected.body as ApkResource;
+		assert.strictEqual(rejectedResource.status, 'rejected');
+		assert.strictEqual(rejectedResource.rejectionReason, 'metadata is incomplete');
+		assert.strictEqual(rejectedResource.reviewNote, 'please resubmit with a clearer version name');
+		assert.strictEqual(rejectedResource.reviewerId, alice.id);
+		assert.ok(rejectedResource.reviewedAt);
 
 		const resubmitted = await api('apk/resources/update', {
 			resourceId: resource.id,
@@ -129,7 +140,12 @@ describe('APK resources', () => {
 			screenshotFileIds: [screenshotFile.id],
 		}, alice);
 		assert.strictEqual(resubmitted.status, 200);
-		assert.strictEqual((resubmitted.body as ApkResource).status, 'pending');
+		const resubmittedResource = resubmitted.body as ApkResource;
+		assert.strictEqual(resubmittedResource.status, 'pending');
+		assert.strictEqual(resubmittedResource.rejectionReason, null);
+		assert.strictEqual(resubmittedResource.reviewNote, null);
+		assert.strictEqual(resubmittedResource.reviewerId, null);
+		assert.strictEqual(resubmittedResource.reviewedAt, null);
 
 		const visibleInAdminSearch = await api('admin/apk/resources/list', {
 			status: 'pending',

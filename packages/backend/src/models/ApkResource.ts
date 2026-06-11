@@ -89,6 +89,35 @@ export class MiApkResource {
 	})
 	public downloadCount: number;
 
+	@Index()
+	@Column({
+		...id(),
+		nullable: true,
+		comment: 'The ID of reviewer.',
+	})
+	public reviewerId: MiUser['id'] | null;
+
+	@ManyToOne(() => MiUser, {
+		onDelete: 'SET NULL',
+	})
+	@JoinColumn()
+	public reviewer: MiUser | null;
+
+	@Column('timestamp with time zone', {
+		nullable: true,
+	})
+	public reviewedAt: Date | null;
+
+	@Column('varchar', {
+		length: 2048, nullable: true,
+	})
+	public reviewNote: string | null;
+
+	@Column('varchar', {
+		length: 2048, nullable: true,
+	})
+	public rejectionReason: string | null;
+
 	constructor(data: Partial<MiApkResource>) {
 		if (data == null) return;
 

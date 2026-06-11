@@ -40,6 +40,10 @@ export const packedApkResourceSchema = {
 		},
 		status: { type: 'string', optional: false, nullable: false },
 		downloadCount: { type: 'number', optional: false, nullable: false },
+		reviewerId: { type: 'string', optional: false, nullable: true, format: 'id' },
+		reviewedAt: { type: 'string', optional: false, nullable: true, format: 'date-time' },
+		reviewNote: { type: 'string', optional: false, nullable: true },
+		rejectionReason: { type: 'string', optional: false, nullable: true },
 		file: {
 			type: 'object',
 			optional: false,
@@ -80,6 +84,10 @@ export async function packApkResource(
 		screenshotFileIds: resource.screenshotFileIds,
 		status: resource.status,
 		downloadCount: resource.downloadCount,
+		reviewerId: resource.reviewerId,
+		reviewedAt: resource.reviewedAt?.toISOString() ?? null,
+		reviewNote: resource.reviewNote,
+		rejectionReason: resource.rejectionReason,
 		file: await driveFileEntityService.pack(driveFile, {
 			detail: true,
 			withUser: true,

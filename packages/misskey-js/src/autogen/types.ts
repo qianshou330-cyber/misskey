@@ -7187,6 +7187,12 @@ export interface operations {
                         screenshotFileIds: string[];
                         status: string;
                         downloadCount: number;
+                        /** Format: id */
+                        reviewerId: string | null;
+                        /** Format: date-time */
+                        reviewedAt: string | null;
+                        reviewNote: string | null;
+                        rejectionReason: string | null;
                         file: components['schemas']['DriveFile'];
                         screenshotFiles: components['schemas']['DriveFile'][];
                     }[];
@@ -7247,6 +7253,8 @@ export interface operations {
                     resourceId: string;
                     /** @enum {string} */
                     status: 'pending' | 'published' | 'rejected';
+                    rejectionReason?: string | null;
+                    reviewNote?: string | null;
                 };
             };
         };
@@ -7276,6 +7284,12 @@ export interface operations {
                         screenshotFileIds: string[];
                         status: string;
                         downloadCount: number;
+                        /** Format: id */
+                        reviewerId: string | null;
+                        /** Format: date-time */
+                        reviewedAt: string | null;
+                        reviewNote: string | null;
+                        rejectionReason: string | null;
                         file: components['schemas']['DriveFile'];
                         screenshotFiles: components['schemas']['DriveFile'][];
                     };
@@ -14355,6 +14369,12 @@ export interface operations {
                         screenshotFileIds: string[];
                         status: string;
                         downloadCount: number;
+                        /** Format: id */
+                        reviewerId: string | null;
+                        /** Format: date-time */
+                        reviewedAt: string | null;
+                        reviewNote: string | null;
+                        rejectionReason: string | null;
                         file: components['schemas']['DriveFile'];
                         screenshotFiles: components['schemas']['DriveFile'][];
                     };
@@ -14600,6 +14620,12 @@ export interface operations {
                         screenshotFileIds: string[];
                         status: string;
                         downloadCount: number;
+                        /** Format: id */
+                        reviewerId: string | null;
+                        /** Format: date-time */
+                        reviewedAt: string | null;
+                        reviewNote: string | null;
+                        rejectionReason: string | null;
                         file: components['schemas']['DriveFile'];
                         screenshotFiles: components['schemas']['DriveFile'][];
                     }[];
@@ -14687,6 +14713,12 @@ export interface operations {
                         screenshotFileIds: string[];
                         status: string;
                         downloadCount: number;
+                        /** Format: id */
+                        reviewerId: string | null;
+                        /** Format: date-time */
+                        reviewedAt: string | null;
+                        reviewNote: string | null;
+                        rejectionReason: string | null;
                         file: components['schemas']['DriveFile'];
                         screenshotFiles: components['schemas']['DriveFile'][];
                     };
@@ -14780,6 +14812,12 @@ export interface operations {
                         screenshotFileIds: string[];
                         status: string;
                         downloadCount: number;
+                        /** Format: id */
+                        reviewerId: string | null;
+                        /** Format: date-time */
+                        reviewedAt: string | null;
+                        reviewNote: string | null;
+                        rejectionReason: string | null;
                         file: components['schemas']['DriveFile'];
                         screenshotFiles: components['schemas']['DriveFile'][];
                     };

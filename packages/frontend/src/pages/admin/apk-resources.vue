@@ -53,9 +53,15 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<span>{{ resource.downloadCount }} 下载</span>
 						</div>
 						<p v-if="resource.description" :class="$style.description">{{ resource.description }}</p>
+						<div v-if="resource.rejectionReason || resource.reviewNote || resource.reviewedAt" :class="$style.reviewInfo">
+							<p v-if="resource.rejectionReason">拒绝原因：{{ resource.rejectionReason }}</p>
+							<p v-if="resource.reviewNote">审核备注：{{ resource.reviewNote }}</p>
+							<p v-if="resource.reviewedAt">审核时间：{{ new Date(resource.reviewedAt).toLocaleString() }}</p>
+						</div>
 						<div :class="$style.ids">
 							<span>资源 ID: {{ resource.id }}</span>
 							<span>作者 ID: {{ resource.userId }}</span>
+							<span v-if="resource.reviewerId">审核人 ID: {{ resource.reviewerId }}</span>
 						</div>
 					</div>
 
@@ -166,11 +172,37 @@ function clearSearch() {
 }
 
 async function updateStatus(resource: ApkResource, nextStatus: Extract<ApkResourceStatus, 'pending' | 'published' | 'rejected'>) {
+	let rejectionReason: string | null = null;
+	let reviewNote: string | null = null;
+
+	if (nextStatus === 'rejected') {
+		const reason = await os.inputText({
+			title: '拒绝原因',
+			text: '请填写给作者查看的拒绝原因。',
+			placeholder: '例如：安装包无法打开、信息不完整、截图不符合要求',
+			minLength: 1,
+			maxLength: 2048,
+		});
+		if (reason.canceled) return;
+		rejectionReason = reason.result.trim();
+	} else {
+		const note = await os.inputText({
+			title: '审核备注',
+			text: nextStatus === 'published' ? '可选：记录本次通过审核的备注。' : '可选：记录本次退回待审的备注。',
+			placeholder: '可留空',
+			maxLength: 2048,
+		});
+		if (note.canceled) return;
+		reviewNote = note.result?.trim() || null;
+	}
+
 	busyResourceId.value = resource.id;
 	try {
 		const updated = await misskeyApi<ApkResource>('admin/apk/resources/update-status', {
 			resourceId: resource.id,
 			status: nextStatus,
+			rejectionReason,
+			reviewNote,
 		});
 		resources.value = resources.value.map(item => item.id === updated.id ? updated : item).filter(item => status.value === 'all' || item.status === status.value);
 	} finally {
@@ -308,6 +340,21 @@ definePage(() => ({
 .description {
 	margin: 12px 0 0;
 	color: color(from var(--MI_THEME-fg) srgb r g b / 0.78);
+	white-space: pre-wrap;
+}
+
+.reviewInfo {
+	display: grid;
+	gap: 4px;
+	margin-top: 12px;
+	padding: 10px 12px;
+	border-radius: 8px;
+	background: color(from var(--MI_THEME-accent) srgb r g b / 0.08);
+	color: color(from var(--MI_THEME-fg) srgb r g b / 0.78);
+}
+
+.reviewInfo p {
+	margin: 0;
 	white-space: pre-wrap;
 }
 
