@@ -37,6 +37,7 @@ export const paramDef = {
 		owner: { type: 'string', enum: ['all', 'me'], default: 'all' },
 		status: { type: 'string', enum: ['all', 'draft', 'pending', 'published', 'rejected'], default: 'all' },
 		query: { type: 'string', minLength: 1, maxLength: 100 },
+		sort: { type: 'string', enum: ['latest', 'downloads'], default: 'latest' },
 	},
 	required: [],
 } as const;
@@ -70,6 +71,11 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 						.orWhere('resource.packageName ILIKE :query')
 						.orWhere('driveFile.name ILIKE :query');
 				}), { query: `%${ps.query}%` });
+			}
+
+			if (ps.sort === 'downloads') {
+				query.orderBy('resource.downloadCount', 'DESC')
+					.addOrderBy('resource.id', 'DESC');
 			}
 
 			const resources = await query.limit(ps.limit).getMany();

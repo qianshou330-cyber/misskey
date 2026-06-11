@@ -27,6 +27,18 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<MkButton rounded :disabled="loading" @click="applySearch">搜索</MkButton>
 					<MkButton v-if="query" rounded :disabled="loading" @click="clearSearch">清空</MkButton>
 				</div>
+
+				<div :class="$style.statusTabs">
+					<MkButton
+						v-for="item in sortTabs"
+						:key="item.value"
+						:primary="sort === item.value"
+						rounded
+						@click="setSort(item.value)"
+					>
+						{{ item.label }}
+					</MkButton>
+				</div>
 			</section>
 
 			<div v-if="loading && resources.length === 0" :class="$style.empty">
@@ -102,6 +114,7 @@ import { misskeyApi } from '@/utility/misskey-api.js';
 import type { ApkResource, ApkResourceStatus } from '@/types/apk-resource.js';
 
 type AdminApkResourceStatus = ApkResourceStatus | 'all';
+type SortFilter = 'latest' | 'downloads';
 
 const statusTabs: { value: AdminApkResourceStatus; label: string }[] = [
 	{ value: 'pending', label: '待审核' },
@@ -109,8 +122,13 @@ const statusTabs: { value: AdminApkResourceStatus; label: string }[] = [
 	{ value: 'rejected', label: '已拒绝' },
 	{ value: 'all', label: '全部' },
 ];
+const sortTabs: { value: SortFilter; label: string }[] = [
+	{ value: 'latest', label: '最新' },
+	{ value: 'downloads', label: '下载量' },
+];
 
 const status = ref<AdminApkResourceStatus>('pending');
+const sort = ref<SortFilter>('latest');
 const query = ref('');
 const queryInput = ref('');
 const resources = ref<ApkResource[]>([]);
@@ -132,6 +150,7 @@ function requestParams(untilId?: string) {
 	return {
 		limit: 20,
 		status: status.value,
+		sort: sort.value,
 		...(query.value ? { query: query.value } : {}),
 		...(untilId ? { untilId } : {}),
 	};
@@ -154,6 +173,12 @@ function loadMore() {
 
 function setStatus(value: AdminApkResourceStatus) {
 	status.value = value;
+	resources.value = [];
+	return load(true);
+}
+
+function setSort(value: SortFilter) {
+	sort.value = value;
 	resources.value = [];
 	return load(true);
 }

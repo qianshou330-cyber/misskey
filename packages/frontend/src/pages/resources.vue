@@ -55,6 +55,18 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<MkButton rounded :disabled="fetching" @click="applySearch">搜索</MkButton>
 					<MkButton v-if="query" rounded :disabled="fetching" @click="clearSearch">清空</MkButton>
 				</div>
+
+				<div :class="$style.segmented">
+					<MkButton
+						v-for="item in sortTabs"
+						:key="item.value"
+						:primary="sort === item.value"
+						rounded
+						@click="setSort(item.value)"
+					>
+						{{ item.label }}
+					</MkButton>
+				</div>
 			</section>
 
 			<MkLoading v-if="fetching && resources.length === 0"/>
@@ -99,6 +111,7 @@ import type { ApkResource, ApkResourceStatus } from '@/types/apk-resource.js';
 
 type OwnerFilter = 'all' | 'me';
 type StatusFilter = ApkResourceStatus | 'all';
+type SortFilter = 'latest' | 'downloads';
 
 const limit = 20;
 const ownerTabs: { value: OwnerFilter; label: string }[] = [
@@ -112,9 +125,14 @@ const statusTabs: { value: StatusFilter; label: string }[] = [
 	{ value: 'rejected', label: '已拒绝' },
 	{ value: 'draft', label: '草稿' },
 ];
+const sortTabs: { value: SortFilter; label: string }[] = [
+	{ value: 'latest', label: '最新' },
+	{ value: 'downloads', label: '下载量' },
+];
 
 const owner = ref<OwnerFilter>('all');
 const status = ref<StatusFilter>('all');
+const sort = ref<SortFilter>('latest');
 const query = ref('');
 const queryInput = ref('');
 const resources = ref<ApkResource[]>([]);
@@ -141,6 +159,7 @@ function requestParams(untilId?: string) {
 		limit,
 		owner: owner.value,
 		status: owner.value === 'me' ? status.value : 'all',
+		sort: sort.value,
 		...(query.value ? { query: query.value } : {}),
 		...(untilId ? { untilId } : {}),
 	};
@@ -192,6 +211,11 @@ function setOwner(value: OwnerFilter) {
 
 function setStatus(value: StatusFilter) {
 	status.value = value;
+	return resetAndFetch();
+}
+
+function setSort(value: SortFilter) {
+	sort.value = value;
 	return resetAndFetch();
 }
 

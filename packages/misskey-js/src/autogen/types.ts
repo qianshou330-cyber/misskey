@@ -7167,6 +7167,11 @@ export interface operations {
                      */
                     status?: 'all' | 'draft' | 'pending' | 'published' | 'rejected';
                     query?: string;
+                    /**
+                     * @default latest
+                     * @enum {string}
+                     */
+                    sort?: 'latest' | 'downloads';
                 };
             };
         };
@@ -14601,6 +14606,11 @@ export interface operations {
                      */
                     status?: 'all' | 'draft' | 'pending' | 'published' | 'rejected';
                     query?: string;
+                    /**
+                     * @default latest
+                     * @enum {string}
+                     */
+                    sort?: 'latest' | 'downloads';
                 };
             };
         };

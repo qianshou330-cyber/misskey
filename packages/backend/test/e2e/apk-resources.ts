@@ -138,6 +138,7 @@ describe('APK resources', () => {
 
 		const visibleInPublicSearch = await api('apk/resources/list', {
 			query: 'nexushub',
+			sort: 'downloads',
 		}, bob);
 		assert.strictEqual(visibleInPublicSearch.status, 200);
 		assert.strictEqual((visibleInPublicSearch.body as ApkResource[]).some(item => item.id === resource.id), true);
@@ -183,6 +184,7 @@ describe('APK resources', () => {
 		const visibleInAdminSearch = await api('admin/apk/resources/list', {
 			status: 'pending',
 			query: 'Resubmitted',
+			sort: 'downloads',
 		}, alice);
 		assert.strictEqual(visibleInAdminSearch.status, 200);
 		assert.strictEqual((visibleInAdminSearch.body as ApkResource[]).some(item => item.id === resource.id), true);
