@@ -37,7 +37,7 @@ coverage
 !/.config/docker_example.env
 !/.config/cypress-devcontainer.yml
 docker-compose.yml
-./compose.yml
+/compose.yml
 .devcontainer/compose.yml
 !/.devcontainer/compose.yml
 
@@ -54,6 +54,7 @@ src-js
 npm-debug.log
 *.pem
 run.bat
+scripts/continue-after-reboot.ps1
 api-docs.json
 *.log
 /redis
