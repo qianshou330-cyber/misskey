@@ -9,8 +9,11 @@ import type * as Bull from 'bullmq';
 
 export const QUEUE = {
 	DELIVER: 'deliver',
+	NATIVE_PUSH: 'nativePush',
 	INBOX: 'inbox',
 	SYSTEM: 'system',
+	MUSIC_CHARTS: 'musicCharts',
+	KPOP_MUSIC_CHARTS: 'kpopMusicCharts',
 	ENDED_POLL_NOTIFICATION: 'endedPollNotification',
 	POST_SCHEDULED_NOTE: 'postScheduledNote',
 	DB: 'db',

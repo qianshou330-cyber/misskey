@@ -14,7 +14,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 				<div class="profile _gaps">
 					<MkAccountMoved v-if="user.movedTo" :movedTo="user.movedTo"/>
-					<MkRemoteCaution v-if="user.host != null" :href="user.url ?? user.uri!"/>
 					<MkInfo v-if="user.host == null && user.username.includes('.')">{{ i18n.ts.isSystemAccount }}</MkInfo>
 
 					<div :key="user.id" class="main _panel">
@@ -22,11 +21,23 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<div class="banner" :style="style"></div>
 							<div class="fade"></div>
 							<div class="title">
-								<MkUserName class="name" :user="user" :nowrap="true"/>
+								<div class="name">
+									<MkUserName :user="user" :nowrap="true"/>
+									<span v-if="badgeRoles.length > 0" class="badgeRoles">
+										<template v-for="(badge, i) in badgeRoles" :key="i">
+											<img v-if="badge.iconUrl" v-tooltip="badge.name" class="badgeRole" :src="badge.iconUrl" :alt="badge.name"/>
+										</template>
+									</span>
+								</div>
 								<div class="bottom">
 									<span class="username"><MkAcct :user="user" :detail="true"/></span>
 									<span v-if="user.isLocked"><i class="ti ti-lock"></i></span>
 									<span v-if="user.isBot"><i class="ti ti-robot"></i></span>
+									<span v-if="user.badgeRoles?.length" :class="$style.badgeRoles">
+										<template v-for="role in user.badgeRoles" :key="role.name">
+										<img v-if="role.iconUrl" v-tooltip="role.name" :src="role.iconUrl" :alt="role.name" :class="$style.badgeRole"/>
+										</template>
+									</span>
 									<button v-if="$i && !isEditingMemo && !memoDraft" class="_button add-note-button" @click="showMemoTextarea">
 										<i class="ti ti-edit"></i> {{ i18n.ts.addMemo }}
 									</button>
@@ -40,11 +51,23 @@ SPDX-License-Identifier: AGPL-3.0-only
 						</div>
 						<MkAvatar class="avatar" :user="user" indicator/>
 						<div class="title">
-							<MkUserName :user="user" :nowrap="false" class="name"/>
+							<div class="name">
+								<MkUserName :user="user" :nowrap="false"/>
+								<span v-if="badgeRoles.length > 0" class="badgeRoles">
+									<template v-for="(badge, i) in badgeRoles" :key="i">
+										<img v-if="badge.iconUrl" v-tooltip="badge.name" class="badgeRole" :src="badge.iconUrl" :alt="badge.name"/>
+									</template>
+								</span>
+							</div>
 							<div class="bottom">
 								<span class="username"><MkAcct :user="user" :detail="true"/></span>
 								<span v-if="user.isLocked"><i class="ti ti-lock"></i></span>
 								<span v-if="user.isBot"><i class="ti ti-robot"></i></span>
+								<span v-if="user.badgeRoles?.length" :class="$style.badgeRoles">
+									<template v-for="role in user.badgeRoles" :key="role.name">
+										<img v-if="role.iconUrl" v-tooltip="role.name" :src="role.iconUrl" :alt="role.name" :class="$style.badgeRole"/>
+									</template>
+								</span>
 							</div>
 						</div>
 						<div v-if="user.followedMessage != null" class="followedMessage">
@@ -53,7 +76,11 @@ SPDX-License-Identifier: AGPL-3.0-only
 								<div><MkSparkle><Mfm :plain="true" :text="user.followedMessage" :author="user" class="_selectable"/></MkSparkle></div>
 							</MkFukidashi>
 						</div>
-						<div v-if="user.roles.length > 0" class="roles">
+						<div v-if="user.roles.length > 0 || badgeRoleCategories.length > 0" class="roles">
+							<span v-for="(badge, i) in badgeRoleCategories" :key="`badge-${i}`" v-tooltip="badge.name" class="role badgeRoleLabel">
+								<img v-if="badge.iconUrl" :src="badge.iconUrl" :alt="badge.name"/>
+								{{ badge.name }}
+							</span>
 							<span v-for="role in user.roles" :key="role.id" v-tooltip="role.description" class="role" :style="{ '--color': role.color ?? '' }">
 								<MkA v-adaptive-bg :to="`/roles/${role.id}`">
 									<img v-if="role.iconUrl" style="height: 1.3em; vertical-align: -22%;" :src="role.iconUrl"/>
@@ -166,7 +193,6 @@ import MkNote from '@/components/MkNote.vue';
 import MkFollowButton from '@/components/MkFollowButton.vue';
 import MkAccountMoved from '@/components/MkAccountMoved.vue';
 import MkFukidashi from '@/components/MkFukidashi.vue';
-import MkRemoteCaution from '@/components/MkRemoteCaution.vue';
 import MkTextarea from '@/components/MkTextarea.vue';
 import MkOmit from '@/components/MkOmit.vue';
 import MkInfo from '@/components/MkInfo.vue';
@@ -222,6 +248,8 @@ const emit = defineEmits<{
 const router = useRouter();
 
 const user = ref(props.user);
+const badgeRoles = computed(() => user.value.badgeRoles ?? []);
+const badgeRoleCategories = computed(() => badgeRoles.value.filter(badge => !user.value.roles.some(role => role.name === badge.name && role.iconUrl === badge.iconUrl)));
 const narrow = ref<null | boolean>(null);
 const rootEl = useTemplateRef('rootEl');
 const bannerEl = useTemplateRef('bannerEl');
@@ -432,15 +460,23 @@ onDeactivated(disposeBannerParallaxResizeObserver);
 						box-sizing: border-box;
 						color: #fff;
 
-						> .name {
-							display: block;
-							margin: -10px;
-							padding: 10px;
-							line-height: 32px;
-							font-weight: bold;
-							font-size: 1.8em;
-							filter: drop-shadow(0 0 4px #000);
+					> .name {
+						display: flex;
+						align-items: center;
+						gap: 6px;
+					margin: -10px;
+					padding: 10px;
+					line-height: 32px;
+					font-weight: bold;
+						font-size: 1.8em;
+						filter: drop-shadow(0 0 4px #000);
+
+						> :first-child {
+							min-width: 0;
+							overflow: hidden;
+							text-overflow: ellipsis;
 						}
+					}
 
 						> .bottom {
 							> * {
@@ -473,6 +509,19 @@ onDeactivated(disposeBannerParallaxResizeObserver);
 					padding: 50px 8px 16px 8px;
 					font-weight: bold;
 					border-bottom: solid 0.5px var(--MI_THEME-divider);
+
+					> .name {
+						display: flex;
+						align-items: center;
+						justify-content: center;
+						gap: 6px;
+
+						> :first-child {
+							min-width: 0;
+							overflow: hidden;
+							text-overflow: ellipsis;
+						}
+					}
 
 					> .bottom {
 						> * {
@@ -523,6 +572,33 @@ onDeactivated(disposeBannerParallaxResizeObserver);
 						margin-right: 4px;
 						padding: 3px 8px;
 					}
+				}
+
+				.badgeRoles {
+					display: inline-flex;
+					align-items: center;
+					gap: 3px;
+					flex-shrink: 0;
+				}
+
+				.badgeRole {
+					width: 1em;
+					height: 1em;
+					object-fit: contain;
+					vertical-align: middle;
+				}
+
+				.badgeRoleLabel {
+					display: inline-flex;
+					align-items: center;
+					gap: 4px;
+				}
+
+				.badgeRoleLabel img {
+					width: 1.3em;
+					height: 1.3em;
+					object-fit: contain;
+					vertical-align: middle;
 				}
 
 				> .moderationNote {
@@ -682,6 +758,10 @@ onDeactivated(disposeBannerParallaxResizeObserver);
 
 				> .title {
 					display: block;
+
+					> .name {
+						justify-content: center;
+					}
 				}
 
 				> .avatar {
@@ -773,5 +853,17 @@ onDeactivated(disposeBannerParallaxResizeObserver);
 .verifiedLink {
 	margin-left: 4px;
 	color: var(--MI_THEME-success);
+}
+
+.badgeRoles {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	margin-right: 8px;
+}
+
+.badgeRole {
+	height: 1.3em;
+	vertical-align: -20%;
 }
 </style>

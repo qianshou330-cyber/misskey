@@ -15,6 +15,7 @@ export const meta = {
 	requireCredential: true,
 
 	kind: 'write:chat',
+	limit: { duration: 60_000, max: 30 },
 
 	errors: {
 	},

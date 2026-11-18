@@ -1,0 +1,14 @@
+{
+  "repository": "https://github.com/m0Corut/snake-io-multiplayer",
+  "commit": "474db86fadce1bed2dbc8019b5c5415ce5a6d714",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2025 m0Corut",
+  "adaptedFiles": ["server/src/game/GameServer.ts", "server/src/game/BotAI.ts", "server/src/game/BotManager.ts", "shared/types.ts"],
+  "adaptation": "Retains authoritative continuous snake movement, segment following, food growth, boost segment cost, toroidal world and computer-player behavior. Replaces singleton/network/authentication, bounds all game collections, adds spatial collision indexing and simultaneous head-on deaths; removes power-ups.",
+  "clientRuntime": {
+    "package": "socket.io-client", "version": "4.8.3", "license": "MIT",
+    "file": "dist/socket.io.esm.min.js",
+    "sha256": "72a57408c85583436488d4dc29231cbb9b805b6e9bec8c7a73a43ff7f21f6c95",
+    "licenseSha256": "73cb68c437d59e066f9386ef97be57298df4db119fdbd7d7150817c6dbd9f189"
+  }
+}

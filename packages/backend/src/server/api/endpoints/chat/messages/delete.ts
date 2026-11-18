@@ -6,7 +6,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Endpoint } from '@/server/api/endpoint-base.js';
 import { DI } from '@/di-symbols.js';
-import { ChatService } from '@/core/ChatService.js';
+import { ChatService, ChatMessageAccessError } from '@/core/ChatService.js';
 import { ApiError } from '@/server/api/error.js';
 
 export const meta = {
@@ -45,7 +45,12 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			if (message == null) {
 				throw new ApiError(meta.errors.noSuchMessage);
 			}
-			await this.chatService.deleteMessage(message);
+			try {
+				await this.chatService.deleteMessage(message);
+			} catch (error) {
+				if (error instanceof ChatMessageAccessError) throw new ApiError(meta.errors.noSuchMessage);
+				throw error;
+			}
 		});
 	}
 }

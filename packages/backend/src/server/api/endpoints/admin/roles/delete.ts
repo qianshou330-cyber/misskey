@@ -9,6 +9,7 @@ import type { RolesRepository } from '@/models/_.js';
 import { DI } from '@/di-symbols.js';
 import { ApiError } from '@/server/api/error.js';
 import { RoleService } from '@/core/RoleService.js';
+import { VERIFICATION_ROLE_ID } from '@/verification-constants.js';
 
 export const meta = {
 	tags: ['admin', 'role'],
@@ -22,6 +23,11 @@ export const meta = {
 			message: 'No such role.',
 			code: 'NO_SUCH_ROLE',
 			id: 'de0d6ecd-8e0a-4253-88ff-74bc89ae3d45',
+		},
+		managedRole: {
+			message: 'This role is managed by the verification workflow.',
+			code: 'MANAGED_ROLE',
+			id: '0d3f69a9-c82d-4711-9514-f1836c5d5f4a',
 		},
 	},
 } as const;
@@ -49,6 +55,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			if (role == null) {
 				throw new ApiError(meta.errors.noSuchRole);
 			}
+			if (role.id === VERIFICATION_ROLE_ID) throw new ApiError(meta.errors.managedRole);
 			await this.roleService.delete(role, me);
 		});
 	}

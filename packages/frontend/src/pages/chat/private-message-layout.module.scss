@@ -1,0 +1,116 @@
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
+// Applied explicitly by the private conversation and its pending messages only.
+.root {
+	position: relative;
+	display: flex;
+	gap: 8px;
+	min-width: 0;
+
+	.avatar {
+		display: block;
+		flex: 0 0 auto;
+		width: 50px;
+		height: 50px;
+	}
+
+	.body {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		min-width: 0;
+		max-width: calc(100% - 58px);
+		margin: 0;
+	}
+
+	.header {
+		min-height: 4px;
+		max-width: 100%;
+		font-size: 80%;
+		overflow-wrap: anywhere;
+	}
+
+	.bubble {
+		box-sizing: border-box;
+		min-width: 0;
+		max-width: 100%;
+		text-align: left;
+		overflow-wrap: anywhere;
+	}
+
+	&.isMe {
+		flex-direction: row-reverse;
+		text-align: right;
+
+		.body {
+			align-items: flex-end;
+		}
+
+		.metadata {
+			flex-direction: row-reverse;
+		}
+
+		.details {
+			justify-content: flex-end;
+		}
+	}
+}
+
+.metadata {
+	display: flex;
+	align-items: baseline;
+	gap: 6px;
+	max-width: 100%;
+	margin-top: 6px;
+	font-size: 75%;
+	line-height: 1.5;
+	overflow-wrap: anywhere;
+}
+
+.details {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 2px 6px;
+	min-width: 0;
+}
+
+.menu {
+	flex: 0 0 auto;
+	color: currentColor;
+}
+
+.stickyAvatar {
+	position: sticky;
+	top: calc(16px + var(--MI-stickyTop, 0px));
+}
+
+@container (max-width: 450px) {
+	.root {
+		.avatar {
+			width: 42px;
+			height: 42px;
+		}
+
+		.body {
+			max-width: calc(100% - 50px);
+		}
+
+		.bubble {
+			font-size: 90%;
+		}
+
+		&.isMe {
+			.avatar {
+				display: none;
+			}
+
+			.body {
+				max-width: 85%;
+			}
+		}
+	}
+}

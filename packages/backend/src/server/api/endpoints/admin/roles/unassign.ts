@@ -9,6 +9,7 @@ import type { RolesRepository, UsersRepository } from '@/models/_.js';
 import { DI } from '@/di-symbols.js';
 import { ApiError } from '@/server/api/error.js';
 import { RoleService } from '@/core/RoleService.js';
+import { VERIFICATION_ROLE_ID } from '@/verification-constants.js';
 
 export const meta = {
 	tags: ['admin', 'role'],
@@ -41,6 +42,12 @@ export const meta = {
 			code: 'ACCESS_DENIED',
 			id: '24636eee-e8c1-493e-94b2-e16ad401e262',
 		},
+
+		managedRole: {
+			message: 'This role is managed by the verification workflow.',
+			code: 'MANAGED_ROLE',
+			id: '6b95ccbc-18d2-4580-a791-34e7b8fefc3d',
+		},
 	},
 } as const;
 
@@ -72,6 +79,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			if (role == null) {
 				throw new ApiError(meta.errors.noSuchRole);
 			}
+			if (role.id === VERIFICATION_ROLE_ID) throw new ApiError(meta.errors.managedRole);
 
 			if (!role.canEditMembersByModerator && !(await this.roleService.isAdministrator(me))) {
 				throw new ApiError(meta.errors.accessDenied);

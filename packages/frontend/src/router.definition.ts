@@ -26,6 +26,16 @@ export const ROUTE_DEF = [{
 	path: '/',
 	component: $i ? PageTimeline : page(() => import('@/pages/welcome.vue')),
 }, {
+	path: '/music-charts/a2o-lite',
+	redirect: '/music-charts/kpop',
+}, {
+	path: '/download/android',
+	component: page(() => import('@/pages/download-android.vue')),
+}, {
+	path: '/music-charts/kpop',
+	component: page(() => import('@/pages/music-charts.vue')),
+	query: { chart: 'initialChart', song: 'initialSong' },
+}, {
 	path: '/timeline',
 	component: PageTimeline,
 }, {
@@ -53,24 +63,16 @@ export const ROUTE_DEF = [{
 	path: '/clips/:clipId',
 	component: page(() => import('@/pages/clip.vue')),
 }, {
-	path: '/resources',
-	component: page(() => import('@/pages/resources.vue')),
-	loginRequired: true,
-}, {
-	path: '/resources/upload',
-	component: page(() => import('@/pages/apk-upload.vue')),
-	loginRequired: true,
-}, {
-	path: '/resources/:fileId',
-	component: page(() => import('@/pages/apk-detail.vue')),
-	loginRequired: true,
-}, {
 	path: '/chat',
 	component: chatPage(() => import('@/pages/chat/home.vue')),
 	loginRequired: true,
 }, {
+	path: '/chat/contacts',
+	component: chatPage(() => import('@/pages/chat/contacts.vue')),
+	loginRequired: true,
+}, {
 	path: '/chat/user/:userId',
-	component: chatPage(() => import('@/pages/chat/room.vue')),
+	component: chatPage(() => import('@/pages/chat/private.vue')),
 	loginRequired: true,
 }, {
 	path: '/chat/room/:roomId',
@@ -92,6 +94,10 @@ export const ROUTE_DEF = [{
 		path: '/profile',
 		name: 'profile',
 		component: page(() => import('@/pages/settings/profile.vue')),
+	}, {
+		path: '/verification',
+		name: 'verification',
+		component: page(() => import('@/pages/settings/verification.vue')),
 	}, {
 		path: '/avatar-decoration',
 		name: 'avatarDecoration',
@@ -255,6 +261,12 @@ export const ROUTE_DEF = [{
 	component: page(() => import('@/pages/explore.vue')),
 	hash: 'initialTab',
 }, {
+	path: '/topics/:topicId',
+	component: page(() => import('@/pages/topic-timeline.vue')),
+}, {
+	path: '/topics',
+	component: page(() => import('@/pages/topics.vue')),
+}, {
 	path: '/search',
 	component: page(() => import('@/pages/search.vue')),
 	query: {
@@ -407,6 +419,10 @@ export const ROUTE_DEF = [{
 		name: 'users',
 		component: page(() => import('@/pages/admin/users.vue')),
 	}, {
+		path: '/verification',
+		name: 'verification',
+		component: page(() => import('@/pages/admin/verification.vue')),
+	}, {
 		path: '/emojis',
 		name: 'emojis',
 		component: page(() => import('@/pages/custom-emojis-manager.vue')),
@@ -430,10 +446,6 @@ export const ROUTE_DEF = [{
 		path: '/files',
 		name: 'files',
 		component: page(() => import('@/pages/admin/files.vue')),
-	}, {
-		path: '/apk-resources',
-		name: 'apk-resources',
-		component: page(() => import('@/pages/admin/apk-resources.vue')),
 	}, {
 		path: '/federation',
 		name: 'federation',
@@ -593,6 +605,10 @@ export const ROUTE_DEF = [{
 }, {
 	path: '/games',
 	component: page(() => import('@/pages/games.vue')),
+	loginRequired: false,
+}, {
+	path: '/games/snake',
+	component: page(() => import('@/pages/snake.vue')),
 	loginRequired: false,
 }, {
 	path: '/bubble-game',

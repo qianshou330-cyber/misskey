@@ -120,6 +120,7 @@ export const moderationLogTypes = [
 	'createAvatarDecoration',
 	'updateAvatarDecoration',
 	'deleteAvatarDecoration',
+	'unsetMfa',
 	'unsetUserAvatar',
 	'unsetUserBanner',
 	'createSystemWebhook',
@@ -134,6 +135,9 @@ export const moderationLogTypes = [
 	'deleteGalleryPost',
 	'deleteChatRoom',
 	'updateProxyAccountDescription',
+	'reviewVerification',
+	'viewVerificationApplication',
+	'viewVerificationDocument',
 ] as const;
 
 export type ModerationLogPayloads = {
@@ -327,6 +331,11 @@ export type ModerationLogPayloads = {
 		avatarDecorationId: string;
 		avatarDecoration: any;
 	};
+	unsetMfa: {
+		userId: string;
+		userUsername: string;
+		userHost: string | null;
+	};
 	unsetUserAvatar: {
 		userId: string;
 		userUsername: string;
@@ -395,6 +404,29 @@ export type ModerationLogPayloads = {
 	updateProxyAccountDescription: {
 		before: string | null;
 		after: string | null;
+	};
+	reviewVerification: {
+		applicationId: string;
+		userId: string;
+		userUsername: string;
+		userHost: string | null;
+		decision: 'approve' | 'reject' | 'revoke';
+		verificationType: string;
+		reason: string | null;
+	};
+	viewVerificationApplication: {
+		applicationId: string;
+		userId: string;
+		view: 'list' | 'detail';
+	};
+	viewVerificationDocument: {
+		applicationId: string;
+		documentId: string;
+		userId: string;
+		userUsername: string;
+		userHost: string | null;
+		side: 'front' | 'back' | null;
+		result: 'success' | 'failed';
 	};
 };
 

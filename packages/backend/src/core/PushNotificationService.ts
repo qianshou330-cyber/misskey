@@ -12,6 +12,7 @@ import type { Packed } from '@/misc/json-schema.js';
 import { getNoteSummary } from '@/misc/get-note-summary.js';
 import type { MiMeta, MiSwSubscription, SwSubscriptionsRepository } from '@/models/_.js';
 import { bindThis } from '@/decorators.js';
+import { NativePushService } from '@/core/NativePushService.js';
 import { RedisKVCache } from '@/misc/cache.js';
 
 // Defined also packages/sw/types.ts#L13
@@ -62,6 +63,7 @@ export class PushNotificationService implements OnApplicationShutdown {
 
 		@Inject(DI.swSubscriptionsRepository)
 		private swSubscriptionsRepository: SwSubscriptionsRepository,
+		private nativePushService: NativePushService,
 	) {
 		this.subscriptionsCache = new RedisKVCache<MiSwSubscription[]>(this.redisClient, 'userSwSubscriptions', {
 			lifetime: 1000 * 60 * 60 * 1, // 1h
@@ -73,7 +75,10 @@ export class PushNotificationService implements OnApplicationShutdown {
 	}
 
 	@bindThis
-	public async pushNotification<T extends keyof PushNotificationsTypes>(userId: string, type: T, body: PushNotificationsTypes[T]) {
+	public async pushNotification<T extends keyof PushNotificationsTypes>(userId: string, type: T, body: PushNotificationsTypes[T], canDeliver?: () => Promise<boolean>) {
+		if (body && (type === 'notification' || type === 'newChatMessage') && 'id' in body) {
+			await this.nativePushService.enqueue(userId, type === 'newChatMessage' ? 'chat' : 'notification', body.id);
+		}
 		if (!this.meta.enableServiceWorker || this.meta.swPublicKey == null || this.meta.swPrivateKey == null) return;
 
 		// アプリケーションの連絡先と、サーバーサイドの鍵ペアの情報を登録
@@ -84,6 +89,7 @@ export class PushNotificationService implements OnApplicationShutdown {
 		const subscriptions = await this.subscriptionsCache.fetch(userId);
 
 		for (const subscription of subscriptions) {
+			if (canDeliver && !await canDeliver()) return;
 			if ([
 				'readAllNotifications',
 			].includes(type) && !subscription.sendReadMessage) continue;

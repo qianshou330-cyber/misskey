@@ -5,41 +5,25 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 <template>
 <PageWithHeader v-model:tab="src" :actions="headerActions" :tabs="$i ? headerTabs : headerTabsWhenNotLogin" :swipable="true" :displayMyAvatar="true" :canOmitTitle="true">
-	<div class="_spacer" style="--MI_SPACER-w: 1160px;">
-		<div :class="$style.layout">
-			<main :class="$style.feed">
-				<MkTip v-if="isBasicTimeline(src)" :k="`tl.${src}`" style="margin-bottom: var(--MI-margin);">
-					{{ i18n.ts._timelineDescription[src] }}
-				</MkTip>
-				<MkPostForm v-if="prefer.r.showFixedPostForm.value" :class="$style.postForm" class="_panel" fixed style="margin-bottom: var(--MI-margin);"/>
-				<MkStreamingNotesTimeline
-					ref="tlComponent"
-					:key="src + withRenotes + withReplies + onlyFiles + withSensitive"
-					:class="$style.tl"
-					:src="(src.split(':')[0] as (BasicTimelineType | 'list'))"
-					:list="src.split(':')[1]"
-					:withRenotes="withRenotes"
-					:withReplies="withReplies"
-					:withSensitive="withSensitive"
-					:onlyFiles="onlyFiles"
-					:sound="true"
-				/>
-			</main>
-
-			<aside :class="$style.aside">
-				<section :class="$style.asidePanel">
-					<div :class="$style.asideTitle">资源库</div>
-					<MkA :class="$style.resourceAction" to="/resources/upload">
-						<i class="ti ti-package-import"></i>
-						<span>上传 APK</span>
-					</MkA>
-					<MkA :class="$style.resourceAction" to="/resources">
-						<i class="ti ti-packages"></i>
-						<span>浏览全部资源</span>
-					</MkA>
-				</section>
-			</aside>
-		</div>
+	<div class="_spacer" style="--MI_SPACER-w: 800px;">
+		<MkHomeAnnouncements v-if="showMusicCharts" style="margin-bottom: var(--MI-margin);"/>
+		<MkMusicChartCard v-if="showMusicCharts" :chartKey="chartKey" :summary="chartSummary" :loading="chartsLoading" :failed="chartsFailed" style="margin-bottom: var(--MI-margin);" @update:chartKey="selectPlatform"/>
+		<MkTip v-if="isBasicTimeline(src)" :k="`tl.${src}`" style="margin-bottom: var(--MI-margin);">
+			{{ i18n.ts._timelineDescription[src] }}
+		</MkTip>
+		<MkPostForm v-if="prefer.r.showFixedPostForm.value" :class="$style.postForm" class="_panel" fixed style="margin-bottom: var(--MI-margin);"/>
+		<MkStreamingNotesTimeline
+			ref="tlComponent"
+			:key="src + withRenotes + withReplies + onlyFiles + withSensitive"
+			:class="$style.tl"
+			:src="(src.split(':')[0] as (BasicTimelineType | 'list'))"
+			:list="src.split(':')[1]"
+			:withRenotes="withRenotes"
+			:withReplies="withReplies"
+			:withSensitive="withSensitive"
+			:onlyFiles="onlyFiles"
+			:sound="true"
+		/>
 	</div>
 </PageWithHeader>
 </template>
@@ -52,6 +36,10 @@ import type { BasicTimelineType } from '@/timelines.js';
 import type { PageHeaderItem } from '@/types/page-header.js';
 import MkStreamingNotesTimeline from '@/components/MkStreamingNotesTimeline.vue';
 import MkPostForm from '@/components/MkPostForm.vue';
+import MkMusicChartCard from '@/components/MkMusicChartCard.vue';
+import MkHomeAnnouncements from '@/components/MkHomeAnnouncements.vue';
+import { useKpopSummary } from '@/composables/use-kpop-charts.js';
+import { useRouter } from '@/router.js';
 import * as os from '@/os.js';
 import { store } from '@/store.js';
 import { i18n } from '@/i18n.js';
@@ -65,6 +53,9 @@ import { availableBasicTimelines, hasWithReplies, isAvailableBasicTimeline, isBa
 import { prefer } from '@/preferences.js';
 
 const tlComponent = useTemplateRef('tlComponent');
+const router = useRouter();
+const showMusicCharts = computed(() => $i != null && router.currentRoute.value.name === 'index');
+const { summary: chartSummary, loading: chartsLoading, failed: chartsFailed, chartKey, selectPlatform } = useKpopSummary(showMusicCharts);
 
 type TimelinePageSrc = BasicTimelineType | `list:${string}`;
 
@@ -323,65 +314,6 @@ definePage(() => ({
 </script>
 
 <style lang="scss" module>
-.layout {
-	display: grid;
-	grid-template-columns: minmax(0, 800px) 300px;
-	gap: var(--MI-margin);
-	align-items: start;
-}
-
-.feed {
-	min-width: 0;
-}
-
-.aside {
-	position: sticky;
-	top: var(--MI-margin);
-	display: flex;
-	flex-direction: column;
-	gap: var(--MI-margin);
-}
-
-.asidePanel {
-	padding: 16px;
-	border: 1px solid color(from var(--MI_THEME-accent) srgb r g b / 0.16);
-	border-radius: var(--MI-radius);
-	background: var(--MI_THEME-panel);
-}
-
-.asideTitle {
-	margin-bottom: 12px;
-	font-weight: 700;
-	color: var(--MI_THEME-fgHighlighted);
-}
-
-.resourceAction {
-	display: flex;
-	align-items: center;
-	gap: 10px;
-	padding: 10px 0;
-	color: var(--MI_THEME-fg);
-}
-
-.resourceAction + .resourceAction {
-	border-top: 1px solid var(--MI_THEME-divider);
-}
-
-.resourceAction i {
-	color: var(--MI_THEME-accent);
-	font-size: 1.2em;
-}
-
-@media (max-width: 1000px) {
-	.layout {
-		grid-template-columns: minmax(0, 1fr);
-	}
-
-	.aside {
-		display: none;
-	}
-}
-
 .new {
 	position: sticky;
 	top: calc(var(--MI-stickyTop, 0px) + 16px);

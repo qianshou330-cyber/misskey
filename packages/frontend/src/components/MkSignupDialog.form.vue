@@ -10,11 +10,11 @@ SPDX-License-Identifier: AGPL-3.0-only
 	</div>
 	<div class="_spacer" style="--MI_SPACER-min: 20px; --MI_SPACER-max: 32px;">
 		<form class="_gaps_m" autocomplete="new-password" @submit.prevent="onSubmit">
-			<MkInput v-if="instance.disableRegistration" v-model="invitationCode" type="text" :spellcheck="false" required data-cy-signup-invitation-code>
+			<MkInput v-if="instance.disableRegistration" v-model="invitationCode" type="text" :spellcheck="false" required data-testid="signup-invitation-code">
 				<template #label>{{ i18n.ts.invitationCode }}</template>
 				<template #prefix><i class="ti ti-key"></i></template>
 			</MkInput>
-			<MkInput v-model="username" type="text" pattern="^[a-zA-Z0-9_]{1,20}$" :spellcheck="false" autocomplete="username" required data-cy-signup-username @update:modelValue="onChangeUsername">
+			<MkInput v-model="username" type="text" pattern="^[a-zA-Z0-9_]{1,20}$" :spellcheck="false" autocomplete="username" required data-testid="signup-username" @update:modelValue="onChangeUsername">
 				<template #label>{{ i18n.ts.username }} <div v-tooltip:dialog="i18n.ts.usernameInfo" class="_button _help"><i class="ti ti-help-circle"></i></div></template>
 				<template #prefix>@</template>
 				<template #suffix>@{{ host }}</template>
@@ -29,7 +29,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<span v-else-if="usernameState === 'max-range'" style="color: var(--MI_THEME-error)"><i class="ti ti-alert-triangle ti-fw"></i> {{ i18n.ts.tooLong }}</span>
 				</template>
 			</MkInput>
-			<MkInput v-if="instance.emailRequiredForSignup" v-model="email" :debounce="true" type="email" :spellcheck="false" required data-cy-signup-email @update:modelValue="onChangeEmail">
+			<MkInput v-if="instance.emailRequiredForSignup" v-model="email" :debounce="true" type="email" :spellcheck="false" required data-testid="signup-email" @update:modelValue="onChangeEmail">
 				<template #label>{{ i18n.ts.emailAddress }} <div v-tooltip:dialog="i18n.ts._signup.emailAddressInfo" class="_button _help"><i class="ti ti-help-circle"></i></div></template>
 				<template #prefix><i class="ti ti-mail"></i></template>
 				<template #caption>
@@ -45,7 +45,19 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<span v-else-if="emailState === 'error'" style="color: var(--MI_THEME-error)"><i class="ti ti-alert-triangle ti-fw"></i> {{ i18n.ts.error }}</span>
 				</template>
 			</MkInput>
-			<MkInput v-model="password" type="password" autocomplete="new-password" required data-cy-signup-password @update:modelValue="onChangePassword">
+			<div class="_gaps_s">
+				<MkInput v-model="phoneNumber" type="tel" inputmode="numeric" autocomplete="tel" required data-testid="signup-phone">
+					<template #label>{{ '手机号' }}</template>
+					<template #prefix><i class="ti ti-device-mobile"></i></template>
+				</MkInput>
+				<div style="display:flex; gap:8px; align-items:flex-end;">
+					<MkInput v-model="smsCode" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="^[0-9]{6}$" required data-testid="signup-sms-code" style="flex:1;">
+						<template #label>{{ '短信验证码' }}</template>
+					</MkInput>
+					<MkButton type="button" rounded :disabled="smsSending || smsCooldown > 0 || !isPhoneValid" @click="requestSmsCode">{{ smsCooldown > 0 ? `${smsCooldown}s` : '获取验证码' }}</MkButton>
+				</div>
+			</div>
+			<MkInput v-model="password" type="password" autocomplete="new-password" required data-testid="signup-password" @update:modelValue="onChangePassword">
 				<template #label>{{ i18n.ts.password }}</template>
 				<template #prefix><i class="ti ti-lock"></i></template>
 				<template #caption>
@@ -54,7 +66,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<span v-if="passwordStrength == 'high'" style="color: var(--MI_THEME-success)"><i class="ti ti-check ti-fw"></i> {{ i18n.ts.strongPassword }}</span>
 				</template>
 			</MkInput>
-			<MkInput v-model="retypedPassword" type="password" autocomplete="new-password" required data-cy-signup-password-retype @update:modelValue="onChangePasswordRetype">
+			<MkInput v-model="retypedPassword" type="password" autocomplete="new-password" required data-testid="signup-password-retype" @update:modelValue="onChangePasswordRetype">
 				<template #label>{{ i18n.ts.password }} ({{ i18n.ts.retype }})</template>
 				<template #prefix><i class="ti ti-lock"></i></template>
 				<template #caption>
@@ -67,7 +79,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 			<MkCaptcha v-if="instance.enableRecaptcha" ref="recaptcha" v-model="reCaptchaResponse" :class="$style.captcha" provider="recaptcha" :sitekey="instance.recaptchaSiteKey"/>
 			<MkCaptcha v-if="instance.enableTurnstile" ref="turnstile" v-model="turnstileResponse" :class="$style.captcha" provider="turnstile" :sitekey="instance.turnstileSiteKey"/>
 			<MkCaptcha v-if="instance.enableTestcaptcha" ref="testcaptcha" v-model="testcaptchaResponse" :class="$style.captcha" provider="testcaptcha" :sitekey="null"/>
-			<MkButton type="submit" :disabled="shouldDisableSubmitting" large gradate rounded data-cy-signup-submit style="margin: 0 auto;">
+			<MkButton type="submit" :disabled="shouldDisableSubmitting" large gradate rounded data-testid="signup-submit" style="margin: 0 auto;">
 				<template v-if="submitting">
 					<MkLoading :em="true" :colored="false"/>
 				</template>
@@ -79,7 +91,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onBeforeUnmount } from 'vue';
 import { toUnicode } from 'punycode.js';
 import * as Misskey from 'misskey-js';
 import * as config from '@@/js/config.js';
@@ -117,6 +129,10 @@ const password = ref<string>('');
 const retypedPassword = ref<string>('');
 const invitationCode = ref<string>('');
 const email = ref('');
+const phoneNumber = ref('');
+const smsCode = ref('');
+const smsSending = ref(false);
+const smsCooldown = ref(0);
 const usernameState = ref<null | 'wait' | 'ok' | 'unavailable' | 'error' | 'invalid-format' | 'min-range' | 'max-range'>(null);
 const emailState = ref<null | 'wait' | 'ok' | 'unavailable:used' | 'unavailable:format' | 'unavailable:disposable' | 'unavailable:banned' | 'unavailable:mx' | 'unavailable:smtp' | 'unavailable' | 'error'>(null);
 const passwordStrength = ref<'' | 'low' | 'medium' | 'high'>('');
@@ -130,6 +146,9 @@ const testcaptchaResponse = ref<string | null>(null);
 const usernameAbortController = ref<null | AbortController>(null);
 const emailAbortController = ref<null | AbortController>(null);
 
+const normalizePhone = (value: string): string => value.replace(/[\s-]/g, '').replace(/^\+86/, '');
+const isPhoneValid = computed(() => /^1[3-9]\d{9}$/.test(normalizePhone(phoneNumber.value)));
+
 const shouldDisableSubmitting = computed((): boolean => {
 	return submitting.value ||
 		instance.enableHcaptcha && !hCaptchaResponse.value ||
@@ -137,7 +156,9 @@ const shouldDisableSubmitting = computed((): boolean => {
 		instance.enableRecaptcha && !reCaptchaResponse.value ||
 		instance.enableTurnstile && !turnstileResponse.value ||
 		instance.enableTestcaptcha && !testcaptchaResponse.value ||
-		instance.emailRequiredForSignup && emailState.value !== 'ok' ||
+	instance.emailRequiredForSignup && emailState.value !== 'ok' ||
+		!isPhoneValid.value ||
+		smsCode.value.length !== 6 ||
 		instance.disableRegistration && invitationCode.value === '' ||
 		usernameState.value !== 'ok' ||
 		passwordRetypeState.value !== 'match';
@@ -252,6 +273,25 @@ function onChangePasswordRetype(): void {
 	passwordRetypeState.value = password.value === retypedPassword.value ? 'match' : 'not-match';
 }
 
+let smsTimer: ReturnType<typeof setInterval> | null = null;
+async function requestSmsCode(): Promise<void> {
+	if (smsSending.value || smsCooldown.value > 0 || !isPhoneValid.value) return;
+	smsSending.value = true;
+	try {
+		await misskeyApi('signup/request-phone-code' as any, { phoneNumber: normalizePhone(phoneNumber.value) });
+		smsCooldown.value = 60;
+		smsTimer = setInterval(() => {
+			smsCooldown.value -= 1;
+			if (smsCooldown.value <= 0 && smsTimer) { clearInterval(smsTimer); smsTimer = null; }
+		}, 1000);
+		os.alert({ type: 'success', text: '验证码已发送，请查收短信' });
+	} catch {
+		os.alert({ type: 'error', text: '验证码发送失败，请稍后重试' });
+	} finally {
+		smsSending.value = false;
+	}
+}
+
 async function onSubmit(): Promise<void> {
 	if (submitting.value) return;
 	submitting.value = true;
@@ -267,6 +307,8 @@ async function onSubmit(): Promise<void> {
 		'turnstile-response': turnstileResponse.value,
 		'testcaptcha-response': testcaptchaResponse.value,
 	};
+	(signupPayload as any).phoneNumber = normalizePhone(phoneNumber.value);
+	(signupPayload as any).smsCode = smsCode.value;
 
 	const res = await window.fetch(`${config.apiUrl}/signup`, {
 		method: 'POST',
@@ -303,6 +345,10 @@ async function onSubmit(): Promise<void> {
 
 	submitting.value = false;
 }
+
+onBeforeUnmount(() => {
+	if (smsTimer) clearInterval(smsTimer);
+});
 
 function onSignupApiError() {
 	submitting.value = false;

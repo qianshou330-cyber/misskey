@@ -9,12 +9,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 	<XTimeline :class="$style.tl"/>
 	<div :class="$style.shape1"></div>
 	<div :class="$style.shape2"></div>
-	<div :class="$style.logoWrapper">
-		<div :class="$style.poweredBy">Powered by</div>
-		<img :src="misskeysvg" :class="$style.misskey"/>
-	</div>
 	<div :class="$style.contents">
-		<MkVisitorDashboard/>
+		<MkVisitorDashboard :showMusicCharts="true"/>
 	</div>
 	<div v-if="instances && instances.length > 0" :class="$style.federation">
 		<MkMarqueeText :duration="40">
@@ -34,7 +30,6 @@ import * as Misskey from 'misskey-js';
 import XTimeline from './welcome.timeline.vue';
 import MkMarqueeText from '@/components/MkMarqueeText.vue';
 import MkFeaturedPhotos from '@/components/MkFeaturedPhotos.vue';
-import misskeysvg from '/client-assets/misskey.svg';
 import { misskeyApiGet } from '@/utility/misskey-api.js';
 import MkVisitorDashboard from '@/components/MkVisitorDashboard.vue';
 import { getProxiedImageUrl } from '@/utility/media-proxy.js';
@@ -72,6 +67,8 @@ misskeyApiGet('federation/instances', {
 	right: 0;
 	width: 80vw; // 100%からshapeの幅を引いている
 	height: 100vh;
+	// 固定レイヤがホイール操作を奪い、コンテンツ列以外の上でページをスクロールできなくなるのを防ぐ (issue #17680)
+	pointer-events: none;
 }
 
 .tl {
@@ -100,6 +97,7 @@ misskeyApiGet('federation/instances', {
 	height: 100vh;
 	background: var(--MI_THEME-accent);
 	clip-path: polygon(0% 0%, 45% 0%, 20% 100%, 0% 100%);
+	pointer-events: none; // 装飾レイヤ。ホイール操作を透過させる (→ .bg 参照)
 }
 .shape2 {
 	position: fixed;
@@ -110,28 +108,7 @@ misskeyApiGet('federation/instances', {
 	background: var(--MI_THEME-accent);
 	clip-path: polygon(0% 0%, 25% 0%, 35% 100%, 0% 100%);
 	opacity: 0.5;
-}
-
-.logoWrapper {
-	position: fixed;
-	top: 36px;
-	left: 36px;
-	flex: auto;
-	color: #fff;
-	user-select: none;
-	pointer-events: none;
-}
-
-.poweredBy {
-	margin-bottom: 2px;
-}
-
-.misskey {
-	width: 120px;
-
-	@media (max-width: 450px) {
-		width: 100px;
-	}
+	pointer-events: none; // 装飾レイヤ。ホイール操作を透過させる (→ .bg 参照)
 }
 
 .contents {

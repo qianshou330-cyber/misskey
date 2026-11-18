@@ -2,6 +2,7 @@ import {
 	Antenna,
 	ChatMessage,
 	ChatMessageLite,
+	ChatMessageLiteFor1on1,
 	DriveFile,
 	DriveFolder,
 	Note,
@@ -51,6 +52,7 @@ export type Channels = {
 			notificationFlushed: () => void;
 			unreadAntenna: (payload: Antenna) => void;
 			newChatMessage: (payload: ChatMessage) => void;
+			chatStateChanged: (payload: { userId: string | null }) => void;
 			readAllAnnouncements: () => void;
 			myTokenRegenerated: () => void;
 			signin: (payload: Signin) => void;
@@ -101,6 +103,17 @@ export type Channels = {
 	};
 	globalTimeline: {
 		params: {
+			withRenotes?: boolean;
+			withFiles?: boolean;
+		};
+		events: {
+			note: (payload: Note) => void;
+		};
+		receives: null;
+	};
+	topicTimeline: {
+		params: {
+			topicId: string;
 			withRenotes?: boolean;
 			withFiles?: boolean;
 		};
@@ -248,6 +261,9 @@ export type Channels = {
 		};
 		events: {
 			message: (payload: ChatMessageLite) => void;
+			updated: (payload: ChatMessageLiteFor1on1) => void;
+			recalled: (payload: ChatMessageLiteFor1on1) => void;
+			read: (payload: { messages: ChatMessageLiteFor1on1[] }) => void;
 			deleted: (payload: ChatMessageLite['id']) => void;
 			react: (payload: {
 				reaction: string;

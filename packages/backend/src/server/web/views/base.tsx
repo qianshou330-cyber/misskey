@@ -37,21 +37,33 @@ export function Layout(props: PropsWithChildren<CommonProps<{
 			<html>
 				<head>
 					<meta charset="UTF-8" />
-					<meta name="application-name" content={props.instanceName || 'NexusHub'} />
+					<meta name="application-name" content="PUBO" />
 					<meta name="referer" content="origin" />
 					<meta name="theme-color" content={props.themeColor ?? '#86b300'} />
 					<meta name="theme-color-orig" content={props.themeColor ?? '#86b300'} />
-					<meta property="og:site_name" content={props.instanceName || 'NexusHub'} />
+					<meta property="og:site_name" content={props.instanceName || 'PUBO'} />
 					<meta property="instance_url" content={props.instanceUrl} />
 					<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
 					<meta name="format-detection" content="telephone=no,date=no,address=no,email=no,url=no" />
-					<link rel="icon" href={props.icon || '/favicon.ico'} />
-					<link rel="apple-touch-icon" href={props.appleTouchIcon || '/apple-touch-icon.png'} />
+					<link rel="icon" href={props.icon || '/favicon.ico?brand=pubo'} />
+					<link rel="apple-touch-icon" href={props.appleTouchIcon || '/apple-touch-icon.png?brand=pubo'} />
 					<link rel="manifest" href="/manifest.json" />
-					<link rel="search" type="application/opensearchdescription+xml" title={props.title || 'NexusHub'} href={`${props.config.url}/opensearch.xml`} />
-					{props.serverErrorImageUrl != null ? <link rel="prefetch" as="image" href={props.serverErrorImageUrl} /> : null}
-					{props.infoImageUrl != null ? <link rel="prefetch" as="image" href={props.infoImageUrl} /> : null}
-					{props.notFoundImageUrl != null ? <link rel="prefetch" as="image" href={props.notFoundImageUrl} /> : null}
+					<link rel="search" type="application/opensearchdescription+xml" title={props.title || 'PUBO'} href={`${props.config.url}/opensearch.xml`} />
+
+					<script>
+						const VERSION = '{props.version}';
+						const CLIENT_ENTRY = {JSON.stringify(props.frontendViteFiles?.entryJs ?? null)};
+						const CLIENT_PRELOADS = {JSON.stringify(props.frontendViteFiles?.modulePreloads ?? [])};
+						const WELCOME_PRELOADS = {JSON.stringify(props.frontendViteFiles?.welcomePreloads ?? [])};
+						const WELCOME_CSS = {JSON.stringify(props.frontendViteFiles?.welcomeCss ?? [])};
+						const ICON_CSS = {JSON.stringify(props.frontendViteFiles?.iconCss ?? null)};
+						const LANGS = {JSON.stringify(props.langs)};
+					</script>
+
+					{safeMetaJson != null ? <script type="application/json" id="misskey_meta" data-generated-at={now}>{safeMetaJson}</script> : null}
+					{safeClientCtxJson != null ? <script type="application/json" id="misskey_clientCtx" data-generated-at={now}>{safeClientCtxJson}</script> : null}
+
+					{props.frontendBootloaderJs != null ? <script>{props.frontendBootloaderJs}</script> : <script src="/vite/loader/boot.js"></script>}
 
 					{props.frontendViteFiles == null ? <script type="module" src="/vite/@vite/client"></script> : null}
 
@@ -59,7 +71,7 @@ export function Layout(props: PropsWithChildren<CommonProps<{
 						<link rel="stylesheet" href={`/vite/${href}`} />
 					))}
 
-					{props.titleSlot ?? <title safe>{props.title || 'NexusHub'}</title>}
+					{props.titleSlot ?? <title safe>{props.title || 'PUBO'}</title>}
 
 					{props.noindex ? <meta name="robots" content="noindex" /> : null}
 
@@ -69,7 +81,7 @@ export function Layout(props: PropsWithChildren<CommonProps<{
 
 					{props.ogSlot ?? (
 						<>
-							<meta property="og:title" content={props.title || 'NexusHub'} />
+							<meta property="og:title" content={props.title || 'PUBO'} />
 							<meta property="og:description" content={props.desc || defaultDescription} />
 							{props.img != null ? <meta property="og:image" content={props.img} /> : null}
 							<meta property="twitter:card" content="summary" />
@@ -78,16 +90,6 @@ export function Layout(props: PropsWithChildren<CommonProps<{
 
 					{props.frontendBootloaderCss != null ? <style safe>{props.frontendBootloaderCss}</style> : <link rel="stylesheet" href="/vite/loader/style.css" />}
 
-					<script>
-						const VERSION = '{props.version}';
-						const CLIENT_ENTRY = {JSON.stringify(props.frontendViteFiles?.entryJs ?? null)};
-						const LANGS = {JSON.stringify(props.langs)};
-					</script>
-
-					{safeMetaJson != null ? <script type="application/json" id="misskey_meta" data-generated-at={now}>{safeMetaJson}</script> : null}
-					{safeClientCtxJson != null ? <script type="application/json" id="misskey_clientCtx" data-generated-at={now}>{safeClientCtxJson}</script> : null}
-
-					{props.frontendBootloaderJs != null ? <script>{props.frontendBootloaderJs}</script> : <script src="/vite/loader/boot.js"></script>}
 				</head>
 				<body>
 					<noscript>

@@ -14,6 +14,7 @@ import { lookup } from '@/utility/lookup.js';
 import * as os from '@/os.js';
 import { i18n } from '@/i18n.js';
 import { unisonReload } from '@/utility/unison-reload.js';
+import { chatHasNotificationUnread, chatUnreadCount } from '@/utility/chat-summary.js';
 
 export const navbarItemDef = reactive<{
 	[key: string]: {
@@ -44,21 +45,9 @@ export const navbarItemDef = reactive<{
 	},
 	drive: {
 		title: i18n.ts.drive,
-		icon: 'ti ti-packages',
-		show: computed(() => $i != null),
-		to: '/resources',
-	},
-	driveManager: {
-		title: '文件管理',
 		icon: 'ti ti-cloud',
 		show: computed(() => $i != null),
 		to: '/my/drive',
-	},
-	apkUpload: {
-		title: '上传 APK',
-		icon: 'ti ti-package-import',
-		show: computed(() => $i != null),
-		to: '/resources/upload',
 	},
 	followRequests: {
 		title: i18n.ts.followRequests,
@@ -144,7 +133,8 @@ export const navbarItemDef = reactive<{
 		icon: 'ti ti-messages',
 		to: '/chat',
 		show: computed(() => $i != null && $i.policies.chatAvailability !== 'unavailable'),
-		indicated: computed(() => $i != null && $i.hasUnreadChatMessages),
+		indicated: computed(() => $i != null && chatHasNotificationUnread.value),
+		indicateValue: computed(() => chatUnreadCount.value ? chatUnreadCount.value > 99 ? '99+' : String(chatUnreadCount.value) : ''),
 	},
 	achievements: {
 		title: i18n.ts.achievements,

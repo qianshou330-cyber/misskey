@@ -5,7 +5,7 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import bcrypt from 'bcryptjs';
-import { IsNull } from 'typeorm';
+import { DataSource, IsNull } from 'typeorm';
 import { DI } from '@/di-symbols.js';
 import type { RegistrationTicketsRepository, UsedUsernamesRepository, UserPendingsRepository, UserProfilesRepository, UsersRepository, MiRegistrationTicket, MiMeta } from '@/models/_.js';
 import type { Config } from '@/config.js';
@@ -20,6 +20,7 @@ import { bindThis } from '@/decorators.js';
 import { L_CHARS, secureRndstr } from '@/misc/secure-rndstr.js';
 import { SigninService } from './SigninService.js';
 import type { FastifyRequest, FastifyReply } from 'fastify';
+import { SmsService } from '@/core/SmsService.js';
 
 @Injectable()
 export class SignupApiService {
@@ -51,7 +52,25 @@ export class SignupApiService {
 		private signupService: SignupService,
 		private signinService: SigninService,
 		private emailService: EmailService,
+		@Inject(DI.db)
+		private db: DataSource,
+		private smsService: SmsService,
 	) {
+	}
+
+	@bindThis
+	public async requestPhoneCode(request: FastifyRequest<{ Body: { phoneNumber: string } }>, reply: FastifyReply) {
+		const phone = this.smsService.normalize(request.body.phoneNumber);
+		const phoneHash = this.smsService.hash(phone);
+		const recent = await this.db.query('SELECT 1 FROM "sms_verification" WHERE "phoneHash" = $1 AND "purpose" = $2 AND "createdAt" > now() - interval \'60 seconds\' LIMIT 1', [phoneHash, this.smsService.getPurpose()]);
+		if (recent.length > 0) throw new FastifyReplyError(429, 'SMS_RATE_LIMITED');
+		const hourly = await this.db.query('SELECT count(*)::int AS count FROM "sms_verification" WHERE "phoneHash" = $1 AND "purpose" = $2 AND "createdAt" > now() - interval \'1 hour\'', [phoneHash, this.smsService.getPurpose()]);
+		if (hourly[0]?.count >= 10) throw new FastifyReplyError(429, 'SMS_RATE_LIMITED');
+		const ipHourly = await this.db.query('SELECT count(*)::int AS count FROM "sms_verification" WHERE "requestIp" = $1 AND "createdAt" > now() - interval \'1 hour\'', [request.ip]);
+		if (ipHourly[0]?.count >= 30) throw new FastifyReplyError(429, 'SMS_RATE_LIMITED');
+		const code = await this.smsService.issue(phone);
+		await this.db.query('INSERT INTO "sms_verification" ("id", "phoneHash", "codeHash", "purpose", "expiresAt", "requestIp") VALUES ($1,$2,$3,$4,now() + interval \'5 minutes\',$5)', [this.idService.gen(), phoneHash, this.smsService.hash(code), this.smsService.getPurpose(), request.ip]);
+		reply.code(204).send();
 	}
 
 	@bindThis
@@ -67,7 +86,9 @@ export class SignupApiService {
 				'g-recaptcha-response'?: string;
 				'turnstile-response'?: string;
 				'm-captcha-response'?: string;
-				'testcaptcha-response'?: string;
+			'testcaptcha-response'?: string;
+				phoneNumber?: string;
+				smsCode?: string;
 			}
 		}>,
 		reply: FastifyReply,
@@ -113,6 +134,21 @@ export class SignupApiService {
 		const host: string | null = process.env.NODE_ENV === 'test' ? (body['host'] ?? null) : null;
 		const invitationCode = body['invitationCode'];
 		const emailAddress = body['emailAddress'];
+		const phoneNumber = body.phoneNumber;
+		const smsCode = body.smsCode;
+		let normalizedPhone: string | null = null;
+		if (process.env.NODE_ENV !== 'test') {
+			if (typeof phoneNumber !== 'string' || typeof smsCode !== 'string') throw new FastifyReplyError(400, 'PHONE_VERIFICATION_REQUIRED');
+			normalizedPhone = this.smsService.normalize(phoneNumber);
+			const rows = await this.db.query('SELECT * FROM "sms_verification" WHERE "phoneHash" = $1 AND "purpose" = $2 AND "consumedAt" IS NULL ORDER BY "createdAt" DESC LIMIT 1', [this.smsService.hash(normalizedPhone), this.smsService.getPurpose()]);
+			const challenge = rows[0];
+			if (!challenge || new Date(challenge.expiresAt).getTime() < Date.now() || challenge.attempts >= 5 || this.smsService.hash(smsCode) !== challenge.codeHash) {
+				if (challenge) await this.db.query('UPDATE "sms_verification" SET "attempts" = "attempts" + 1 WHERE "id" = $1', [challenge.id]);
+				throw new FastifyReplyError(400, 'INVALID_SMS_CODE');
+			}
+			await this.db.query('UPDATE "sms_verification" SET "consumedAt" = now() WHERE "id" = $1', [challenge.id]);
+			if ((await this.userProfilesRepository.findOneBy({ phoneNumber: normalizedPhone })) != null) throw new FastifyReplyError(400, 'PHONE_ALREADY_BOUND');
+		}
 
 		if (this.meta.emailRequiredForSignup) {
 			if (emailAddress == null || typeof emailAddress !== 'string') {
@@ -215,9 +251,15 @@ export class SignupApiService {
 			return;
 		} else {
 			try {
+				if (normalizedPhone && await this.userProfilesRepository.findOneBy({ phoneNumber: normalizedPhone })) {
+					throw new FastifyReplyError(400, 'PHONE_ALREADY_BOUND');
+				}
 				const { account, secret } = await this.signupService.signup({
 					username, password, host,
 				});
+				if (normalizedPhone) {
+					await this.userProfilesRepository.update(account.id, { phoneNumber: normalizedPhone, phoneVerified: true });
+				}
 
 				const res = await this.userEntityService.pack(account, account, {
 					schema: 'MeDetailed',

@@ -28,6 +28,15 @@ import { themeManager } from '@/theme.js';
 import { store } from '@/store.js';
 import 'chartjs-adapter-date-fns';
 
+// gradient 0.6.1 retains charts in a Map, but still uses Chart.js 3's
+// destroy hook. Chart.js 4 calls afterDestroy instead.
+const gradientWithCleanup: typeof gradient = {
+	...gradient,
+	afterDestroy: gradient.afterDestroy ?? ((chart) => {
+		(gradient as typeof gradient & { destroy?: (chart: Chart) => void }).destroy?.(chart);
+	}),
+};
+
 export function initChart() {
 	Chart.register(
 		ArcElement,
@@ -47,7 +56,7 @@ export function initChart() {
 		Filler,
 		MatrixController, MatrixElement,
 		zoomPlugin,
-		gradient,
+		gradientWithCleanup,
 	);
 
 	// フォントカラー

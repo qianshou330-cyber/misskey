@@ -28,6 +28,9 @@ export type ViteFiles = {
 	entryJs: string | null;
 	css: string[];
 	modulePreloads: string[];
+	welcomePreloads?: string[];
+	welcomeCss?: string[];
+	iconCss?: string;
 };
 
 export type CommonData = MinimumCommonData & {

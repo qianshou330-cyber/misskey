@@ -15,8 +15,6 @@ import { MiAbuseUserReport } from '@/models/AbuseUserReport.js';
 import { MiAbuseReportNotificationRecipient } from '@/models/AbuseReportNotificationRecipient.js';
 import { MiAccessToken } from '@/models/AccessToken.js';
 import { MiAd } from '@/models/Ad.js';
-import { MiApkResource } from '@/models/ApkResource.js';
-import { MiApkResourceVersion } from '@/models/ApkResourceVersion.js';
 import { MiAnnouncement } from '@/models/Announcement.js';
 import { MiAnnouncementRead } from '@/models/AnnouncementRead.js';
 import { MiAntenna } from '@/models/Antenna.js';
@@ -59,6 +57,7 @@ import { MiRegistrationTicket } from '@/models/RegistrationTicket.js';
 import { MiRegistryItem } from '@/models/RegistryItem.js';
 import { MiRelay } from '@/models/Relay.js';
 import { MiSignin } from '@/models/Signin.js';
+import { MiNativePushSubscription } from '@/models/NativePushSubscription.js';
 import { MiSwSubscription } from '@/models/SwSubscription.js';
 import { MiUsedUsername } from '@/models/UsedUsername.js';
 import { MiUser } from '@/models/User.js';
@@ -69,6 +68,8 @@ import { MiUserListFavorite } from '@/models/UserListFavorite.js';
 import { MiUserListMembership } from '@/models/UserListMembership.js';
 import { MiUserNotePining } from '@/models/UserNotePining.js';
 import { MiUserPending } from '@/models/UserPending.js';
+import { MiVerificationApplication } from '@/models/VerificationApplication.js';
+import { MiVerificationDocument } from '@/models/VerificationDocument.js';
 import { MiUserProfile } from '@/models/UserProfile.js';
 import { MiUserPublickey } from '@/models/UserPublickey.js';
 import { MiUserSecurityKey } from '@/models/UserSecurityKey.js';
@@ -81,6 +82,15 @@ import { MiRoleAssignment } from '@/models/RoleAssignment.js';
 import { MiFlash } from '@/models/Flash.js';
 import { MiFlashLike } from '@/models/FlashLike.js';
 import { MiUserMemo } from '@/models/UserMemo.js';
+import { MiChatContactGroup } from '@/models/ChatContactGroup.js';
+import { MiChatContactGroupMember } from '@/models/ChatContactGroupMember.js';
+import { MiChatBlocking } from '@/models/ChatBlocking.js';
+import { MiChatLegacyUnread } from '@/models/ChatLegacyUnread.js';
+import { MiChatConversationSetting } from '@/models/ChatConversationSetting.js';
+import { MiChatAttachmentBlob } from '@/models/ChatAttachmentBlob.js';
+import { MiChatAttachment } from '@/models/ChatAttachment.js';
+import { MiChatUploadReservation } from '@/models/ChatUploadReservation.js';
+import { MiChatAttachmentMigration } from '@/models/ChatAttachmentMigration.js';
 import { MiChatMessage } from '@/models/ChatMessage.js';
 import { MiChatRoom } from '@/models/ChatRoom.js';
 import { MiChatRoomMembership } from '@/models/ChatRoomMembership.js';
@@ -89,6 +99,11 @@ import { MiBubbleGameRecord } from '@/models/BubbleGameRecord.js';
 import { MiReversiGame } from '@/models/ReversiGame.js';
 import { MiChatApproval } from '@/models/ChatApproval.js';
 import { MiSystemAccount } from '@/models/SystemAccount.js';
+import { MiMusicChartState } from '@/models/MusicChartState.js';
+import { MiKpopChartState } from '@/models/KpopChartState.js';
+import { MiKpopChartSnapshot } from '@/models/KpopChartSnapshot.js';
+import { MiKpopChartEntry } from '@/models/KpopChartEntry.js';
+import { MiMusicChartSnapshot } from '@/models/MusicChartSnapshot.js';
 
 pg.types.setTypeParser(20, Number);
 
@@ -210,8 +225,6 @@ export const entities = [
 	MiNoteDraft,
 	MiPage,
 	MiPageLike,
-	MiApkResource,
-	MiApkResourceVersion,
 	MiGalleryPost,
 	MiGalleryLike,
 	MiDriveFile,
@@ -221,7 +234,13 @@ export const entities = [
 	MiEmoji,
 	MiHashtag,
 	MiSwSubscription,
+	MiNativePushSubscription,
 	MiSystemAccount,
+	MiMusicChartState,
+	MiKpopChartState,
+	MiKpopChartSnapshot,
+	MiKpopChartEntry,
+	MiMusicChartSnapshot,
 	MiAbuseUserReport,
 	MiAbuseReportNotificationRecipient,
 	MiRegistrationTicket,
@@ -242,6 +261,8 @@ export const entities = [
 	MiAd,
 	MiPasswordResetRequest,
 	MiUserPending,
+	MiVerificationApplication,
+	MiVerificationDocument,
 	MiWebhook,
 	MiSystemWebhook,
 	MiUserIp,
@@ -251,6 +272,15 @@ export const entities = [
 	MiFlash,
 	MiFlashLike,
 	MiUserMemo,
+	MiChatContactGroup,
+	MiChatContactGroupMember,
+	MiChatBlocking,
+	MiChatLegacyUnread,
+	MiChatConversationSetting,
+	MiChatAttachmentBlob,
+	MiChatAttachment,
+	MiChatUploadReservation,
+	MiChatAttachmentMigration,
 	MiChatMessage,
 	MiChatRoom,
 	MiChatRoomMembership,

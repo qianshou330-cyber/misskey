@@ -18,7 +18,7 @@ import { FlashService } from '@/core/FlashService.js';
 import { ChannelMutingService } from '@/core/ChannelMutingService.js';
 import { AccountMoveService } from './AccountMoveService.js';
 import { AccountUpdateService } from './AccountUpdateService.js';
-import { AiService } from './AiService.js';
+import { SensitiveMediaDetectionService } from './SensitiveMediaDetectionService.js';
 import { AnnouncementService } from './AnnouncementService.js';
 import { AntennaService } from './AntennaService.js';
 import { AchievementService } from './AchievementService.js';
@@ -47,6 +47,7 @@ import { NotePiningService } from './NotePiningService.js';
 import { NoteDraftService } from './NoteDraftService.js';
 import { NotificationService } from './NotificationService.js';
 import { PollService } from './PollService.js';
+import { NativePushService } from './NativePushService.js';
 import { PushNotificationService } from './PushNotificationService.js';
 import { QueryService } from './QueryService.js';
 import { ReactionService } from './ReactionService.js';
@@ -55,6 +56,7 @@ import { RelayService } from './RelayService.js';
 import { RoleService } from './RoleService.js';
 import { S3Service } from './S3Service.js';
 import { SignupService } from './SignupService.js';
+import { SmsService } from './SmsService.js';
 import { WebAuthnService } from './WebAuthnService.js';
 import { UserBlockingService } from './UserBlockingService.js';
 import { CacheService } from './CacheService.js';
@@ -74,11 +76,26 @@ import { SearchService } from './SearchService.js';
 import { ClipService } from './ClipService.js';
 import { FeaturedService } from './FeaturedService.js';
 import { FanoutTimelineService } from './FanoutTimelineService.js';
+import { PublicTopicService } from './PublicTopicService.js';
 import { ChannelFollowingService } from './ChannelFollowingService.js';
+import { ChatContactService } from './ChatContactService.js';
+import { ChatConversationService } from './ChatConversationService.js';
+import { ChatPermissionService } from './ChatPermissionService.js';
+import { ChatAttachmentService } from './ChatAttachmentService.js';
+import { ChatAttachmentStorageService } from './ChatAttachmentStorageService.js';
+import { ChatVoiceService } from './ChatVoiceService.js';
+import { UserStorageQuotaService } from './UserStorageQuotaService.js';
+import { ChatAttachmentMigrationService } from './ChatAttachmentMigrationService.js';
 import { ChatService } from './ChatService.js';
+import { MusicChartService } from './MusicChartService.js';
+import { KpopMusicChartService } from './KpopMusicChartService.js';
+import { MusicChartReferenceService } from './MusicChartReferenceService.js';
 import { RegistryApiService } from './RegistryApiService.js';
 import { ReversiService } from './ReversiService.js';
 import { PageService } from './PageService.js';
+import { VerificationService } from './VerificationService.js';
+import { VerificationStorageService } from './VerificationStorageService.js';
+import { VerificationCleanupService } from './VerificationCleanupService.js';
 
 import { ChartLoggerService } from './chart/ChartLoggerService.js';
 import FederationChart from './chart/charts/federation.js';
@@ -154,15 +171,17 @@ import { ApQuestionService } from './activitypub/models/ApQuestionService.js';
 import { QueueModule } from './QueueModule.js';
 import { QueueService } from './QueueService.js';
 import { LoggerService } from './LoggerService.js';
+import { TelemetryService } from './telemetry/TelemetryService.js';
 import type { Provider } from '@nestjs/common';
 
 //#region 文字列ベースでのinjection用(循環参照対応のため)
 const $LoggerService: Provider = { provide: 'LoggerService', useExisting: LoggerService };
+const $TelemetryService: Provider = { provide: 'TelemetryService', useExisting: TelemetryService };
 const $AbuseReportService: Provider = { provide: 'AbuseReportService', useExisting: AbuseReportService };
 const $AbuseReportNotificationService: Provider = { provide: 'AbuseReportNotificationService', useExisting: AbuseReportNotificationService };
 const $AccountMoveService: Provider = { provide: 'AccountMoveService', useExisting: AccountMoveService };
 const $AccountUpdateService: Provider = { provide: 'AccountUpdateService', useExisting: AccountUpdateService };
-const $AiService: Provider = { provide: 'AiService', useExisting: AiService };
+const $SensitiveMediaDetectionService: Provider = { provide: 'SensitiveMediaDetectionService', useExisting: SensitiveMediaDetectionService };
 const $AnnouncementService: Provider = { provide: 'AnnouncementService', useExisting: AnnouncementService };
 const $AntennaService: Provider = { provide: 'AntennaService', useExisting: AntennaService };
 const $AchievementService: Provider = { provide: 'AchievementService', useExisting: AchievementService };
@@ -229,6 +248,9 @@ const $ChatService: Provider = { provide: 'ChatService', useExisting: ChatServic
 const $RegistryApiService: Provider = { provide: 'RegistryApiService', useExisting: RegistryApiService };
 const $ReversiService: Provider = { provide: 'ReversiService', useExisting: ReversiService };
 const $PageService: Provider = { provide: 'PageService', useExisting: PageService };
+const $VerificationService: Provider = { provide: 'VerificationService', useExisting: VerificationService };
+const $VerificationStorageService: Provider = { provide: 'VerificationStorageService', useExisting: VerificationStorageService };
+const $VerificationCleanupService: Provider = { provide: 'VerificationCleanupService', useExisting: VerificationCleanupService };
 
 const $ChartLoggerService: Provider = { provide: 'ChartLoggerService', useExisting: ChartLoggerService };
 const $FederationChart: Provider = { provide: 'FederationChart', useExisting: FederationChart };
@@ -315,7 +337,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		AbuseReportNotificationService,
 		AccountMoveService,
 		AccountUpdateService,
-		AiService,
+		SensitiveMediaDetectionService,
 		AnnouncementService,
 		AntennaService,
 		AchievementService,
@@ -345,6 +367,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		PollService,
 		SystemAccountService,
 		PushNotificationService,
+		NativePushService,
 		QueryService,
 		ReactionService,
 		ReactionsBufferingService,
@@ -352,6 +375,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		RoleService,
 		S3Service,
 		SignupService,
+		SmsService,
 		WebAuthnService,
 		UserBlockingService,
 		CacheService,
@@ -375,13 +399,28 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		ClipService,
 		FeaturedService,
 		FanoutTimelineService,
+		PublicTopicService,
 		FanoutTimelineEndpointService,
 		ChannelFollowingService,
 		ChannelMutingService,
+		ChatContactService,
+		ChatConversationService,
+		ChatPermissionService,
+		ChatAttachmentService,
+		ChatAttachmentStorageService,
+		ChatVoiceService,
+		UserStorageQuotaService,
+		ChatAttachmentMigrationService,
 		ChatService,
+		MusicChartService,
+		KpopMusicChartService,
+		MusicChartReferenceService,
 		RegistryApiService,
 		ReversiService,
 		PageService,
+		VerificationService,
+		VerificationStorageService,
+		VerificationCleanupService,
 
 		ChartLoggerService,
 		FederationChart,
@@ -458,6 +497,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		ApPersonService,
 		ApQuestionService,
 		QueueService,
+		TelemetryService,
 
 		//#region 文字列ベースでのinjection用(循環参照対応のため)
 		$LoggerService,
@@ -465,7 +505,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		$AbuseReportNotificationService,
 		$AccountMoveService,
 		$AccountUpdateService,
-		$AiService,
+		$SensitiveMediaDetectionService,
 		$AnnouncementService,
 		$AntennaService,
 		$AchievementService,
@@ -532,6 +572,9 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		$RegistryApiService,
 		$ReversiService,
 		$PageService,
+		$VerificationService,
+		$VerificationStorageService,
+		$VerificationCleanupService,
 
 		$ChartLoggerService,
 		$FederationChart,
@@ -606,6 +649,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		$ApNoteService,
 		$ApPersonService,
 		$ApQuestionService,
+		$TelemetryService,
 		//#endregion
 	],
 	exports: [
@@ -615,7 +659,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		AbuseReportNotificationService,
 		AccountMoveService,
 		AccountUpdateService,
-		AiService,
+		SensitiveMediaDetectionService,
 		AnnouncementService,
 		AntennaService,
 		AchievementService,
@@ -645,6 +689,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		PollService,
 		SystemAccountService,
 		PushNotificationService,
+		NativePushService,
 		QueryService,
 		ReactionService,
 		ReactionsBufferingService,
@@ -652,6 +697,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		RoleService,
 		S3Service,
 		SignupService,
+		SmsService,
 		WebAuthnService,
 		UserBlockingService,
 		CacheService,
@@ -675,13 +721,28 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		ClipService,
 		FeaturedService,
 		FanoutTimelineService,
+		PublicTopicService,
 		FanoutTimelineEndpointService,
 		ChannelFollowingService,
 		ChannelMutingService,
+		ChatContactService,
+		ChatConversationService,
+		ChatPermissionService,
+		ChatAttachmentService,
+		ChatAttachmentStorageService,
+		ChatVoiceService,
+		UserStorageQuotaService,
+		ChatAttachmentMigrationService,
 		ChatService,
+		MusicChartService,
+		KpopMusicChartService,
+		MusicChartReferenceService,
 		RegistryApiService,
 		ReversiService,
 		PageService,
+		VerificationService,
+		VerificationStorageService,
+		VerificationCleanupService,
 
 		FederationChart,
 		NotesChart,
@@ -757,6 +818,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		ApPersonService,
 		ApQuestionService,
 		QueueService,
+		TelemetryService,
 
 		//#region 文字列ベースでのinjection用(循環参照対応のため)
 		$LoggerService,
@@ -764,7 +826,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		$AbuseReportNotificationService,
 		$AccountMoveService,
 		$AccountUpdateService,
-		$AiService,
+		$SensitiveMediaDetectionService,
 		$AnnouncementService,
 		$AntennaService,
 		$AchievementService,
@@ -830,6 +892,9 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		$RegistryApiService,
 		$ReversiService,
 		$PageService,
+		$VerificationService,
+		$VerificationStorageService,
+		$VerificationCleanupService,
 
 		$FederationChart,
 		$NotesChart,
@@ -903,6 +968,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		$ApNoteService,
 		$ApPersonService,
 		$ApQuestionService,
+		$TelemetryService,
 		//#endregion
 	],
 })

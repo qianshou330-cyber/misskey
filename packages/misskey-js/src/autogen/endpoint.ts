@@ -29,12 +29,6 @@ import type {
 	AdminAnnouncementsListRequest,
 	AdminAnnouncementsListResponse,
 	AdminAnnouncementsUpdateRequest,
-	AdminApkResourcesDeleteRequest,
-	AdminApkResourcesDeleteResponse,
-	AdminApkResourcesListRequest,
-	AdminApkResourcesListResponse,
-	AdminApkResourcesUpdateStatusRequest,
-	AdminApkResourcesUpdateStatusResponse,
 	AdminAvatarDecorationsCreateRequest,
 	AdminAvatarDecorationsCreateResponse,
 	AdminAvatarDecorationsDeleteRequest,
@@ -137,6 +131,7 @@ import type {
 	AdminSystemWebhookTestRequest,
 	AdminSystemWebhookUpdateRequest,
 	AdminSystemWebhookUpdateResponse,
+	AdminUnsetMfaRequest,
 	AdminUnsetUserAvatarRequest,
 	AdminUnsetUserBannerRequest,
 	AdminUnsuspendUserRequest,
@@ -145,6 +140,15 @@ import type {
 	AdminUpdateProxyAccountRequest,
 	AdminUpdateProxyAccountResponse,
 	AdminUpdateUserNoteRequest,
+	AdminVerificationApproveRequest,
+	AdminVerificationDocumentRequest,
+	AdminVerificationDocumentResponse,
+	AdminVerificationListRequest,
+	AdminVerificationListResponse,
+	AdminVerificationRejectRequest,
+	AdminVerificationRevokeRequest,
+	AdminVerificationShowRequest,
+	AdminVerificationShowResponse,
 	AnnouncementsRequest,
 	AnnouncementsResponse,
 	AnnouncementsShowRequest,
@@ -164,19 +168,6 @@ import type {
 	ApGetResponse,
 	ApShowRequest,
 	ApShowResponse,
-	ApkResourcesCreateRequest,
-	ApkResourcesCreateResponse,
-	ApkResourcesDeleteRequest,
-	ApkResourcesDownloadRequest,
-	ApkResourcesDownloadResponse,
-	ApkResourcesListRequest,
-	ApkResourcesListResponse,
-	ApkResourcesShowRequest,
-	ApkResourcesShowResponse,
-	ApkResourcesUpdateRequest,
-	ApkResourcesUpdateResponse,
-	ApkResourcesVersionsRequest,
-	ApkResourcesVersionsResponse,
 	AppCreateRequest,
 	AppCreateResponse,
 	AppShowRequest,
@@ -244,21 +235,54 @@ import type {
 	ChartsUserReactionsResponse,
 	ChartsUsersRequest,
 	ChartsUsersResponse,
+	ChatAttachmentsCreateRequest,
+	ChatAttachmentsCreateResponse,
+	ChatAttachmentsDeleteRequest,
+	ChatAttachmentsImportDriveRequest,
+	ChatAttachmentsImportDriveResponse,
+	ChatAttachmentsShowRequest,
+	ChatAttachmentsShowResponse,
+	ChatBlockingCreateRequest,
+	ChatBlockingDeleteRequest,
+	ChatBlockingListRequest,
+	ChatBlockingListResponse,
+	ChatContactGroupsAddUserRequest,
+	ChatContactGroupsCreateRequest,
+	ChatContactGroupsCreateResponse,
+	ChatContactGroupsDeleteRequest,
+	ChatContactGroupsListResponse,
+	ChatContactGroupsRemoveUserRequest,
+	ChatContactGroupsUpdateRequest,
+	ChatContactGroupsUpdateResponse,
+	ChatConversationSettingsShowRequest,
+	ChatConversationSettingsShowResponse,
+	ChatConversationSettingsUpdateRequest,
+	ChatConversationSettingsUpdateResponse,
+	ChatConversationsRequest,
+	ChatConversationsResponse,
 	ChatHistoryRequest,
 	ChatHistoryResponse,
+	ChatMessagesContextRequest,
+	ChatMessagesContextResponse,
 	ChatMessagesCreateToRoomRequest,
 	ChatMessagesCreateToRoomResponse,
 	ChatMessagesCreateToUserRequest,
 	ChatMessagesCreateToUserResponse,
 	ChatMessagesDeleteRequest,
 	ChatMessagesReactRequest,
+	ChatMessagesReadRequest,
+	ChatMessagesReadResponse,
 	ChatMessagesRoomTimelineRequest,
 	ChatMessagesRoomTimelineResponse,
 	ChatMessagesSearchRequest,
 	ChatMessagesSearchResponse,
 	ChatMessagesShowRequest,
 	ChatMessagesShowResponse,
+	ChatMessagesStateRequest,
+	ChatMessagesStateResponse,
 	ChatMessagesUnreactRequest,
+	ChatMessagesUpdateRequest,
+	ChatMessagesUpdateResponse,
 	ChatMessagesUserTimelineRequest,
 	ChatMessagesUserTimelineResponse,
 	ChatRoomsCreateRequest,
@@ -284,6 +308,7 @@ import type {
 	ChatRoomsShowResponse,
 	ChatRoomsUpdateRequest,
 	ChatRoomsUpdateResponse,
+	ChatUnreadSummaryResponse,
 	ClipsAddNoteRequest,
 	ClipsCreateRequest,
 	ClipsCreateResponse,
@@ -409,6 +434,7 @@ import type {
 	GalleryPostsUnlikeRequest,
 	GalleryPostsUpdateRequest,
 	GalleryPostsUpdateResponse,
+	GamesSnakeSessionResponse,
 	GetAvatarDecorationsResponse,
 	GetOnlineUsersCountResponse,
 	HashtagsListRequest,
@@ -437,6 +463,7 @@ import type {
 	IAppsResponse,
 	IAuthorizedAppsRequest,
 	IAuthorizedAppsResponse,
+	IBindPhoneRequest,
 	IChangePasswordRequest,
 	IClaimAchievementRequest,
 	IDeleteAccountRequest,
@@ -505,12 +532,24 @@ import type {
 	MetaResponse,
 	MiauthGenTokenRequest,
 	MiauthGenTokenResponse,
+	MusicChartsHistoryRequest,
+	MusicChartsHistoryResponse,
+	MusicChartsKpopChartRequest,
+	MusicChartsKpopChartResponse,
+	MusicChartsKpopHistoryRequest,
+	MusicChartsKpopHistoryResponse,
+	MusicChartsKpopSummaryRequest,
+	MusicChartsKpopSummaryResponse,
+	MusicChartsSummaryResponse,
 	MuteCreateRequest,
 	MuteDeleteRequest,
 	MuteListRequest,
 	MuteListResponse,
 	MyAppsRequest,
 	MyAppsResponse,
+	NativePushRegisterRequest,
+	NativePushRegisterResponse,
+	NativePushUnregisterRequest,
 	NotesRequest,
 	NotesResponse,
 	NotesChildrenRequest,
@@ -567,6 +606,8 @@ import type {
 	NotesThreadMutingDeleteRequest,
 	NotesTimelineRequest,
 	NotesTimelineResponse,
+	NotesTopicTimelineRequest,
+	NotesTopicTimelineResponse,
 	NotesTranslateRequest,
 	NotesTranslateResponse,
 	NotesUnrenoteRequest,
@@ -591,7 +632,9 @@ import type {
 	RenoteMuteListRequest,
 	RenoteMuteListResponse,
 	RequestResetPasswordRequest,
+	RequestResetPasswordPhoneRequest,
 	ResetPasswordRequest,
+	ResetPasswordPhoneRequest,
 	RetentionResponse,
 	ReversiCancelMatchRequest,
 	ReversiGamesRequest,
@@ -682,6 +725,11 @@ import type {
 	UsersUpdateMemoRequest,
 	V2AdminEmojiListRequest,
 	V2AdminEmojiListResponse,
+	VerificationCreateRequest,
+	VerificationCreateResponse,
+	VerificationShowResponse,
+	VerificationUploadRequest,
+	VerificationUploadResponse,
 	VerifyEmailRequest,
 } from './entities.js';
 
@@ -703,9 +751,6 @@ export type Endpoints = {
 	'admin/announcements/delete': { req: AdminAnnouncementsDeleteRequest; res: EmptyResponse };
 	'admin/announcements/list': { req: AdminAnnouncementsListRequest; res: AdminAnnouncementsListResponse };
 	'admin/announcements/update': { req: AdminAnnouncementsUpdateRequest; res: EmptyResponse };
-	'admin/apk/resources/delete': { req: AdminApkResourcesDeleteRequest; res: AdminApkResourcesDeleteResponse };
-	'admin/apk/resources/list': { req: AdminApkResourcesListRequest; res: AdminApkResourcesListResponse };
-	'admin/apk/resources/update-status': { req: AdminApkResourcesUpdateStatusRequest; res: AdminApkResourcesUpdateStatusResponse };
 	'admin/avatar-decorations/create': { req: AdminAvatarDecorationsCreateRequest; res: AdminAvatarDecorationsCreateResponse };
 	'admin/avatar-decorations/delete': { req: AdminAvatarDecorationsDeleteRequest; res: EmptyResponse };
 	'admin/avatar-decorations/list': { req: AdminAvatarDecorationsListRequest; res: AdminAvatarDecorationsListResponse };
@@ -783,6 +828,7 @@ export type Endpoints = {
 	'admin/system-webhook/show': { req: AdminSystemWebhookShowRequest; res: AdminSystemWebhookShowResponse };
 	'admin/system-webhook/test': { req: AdminSystemWebhookTestRequest; res: EmptyResponse };
 	'admin/system-webhook/update': { req: AdminSystemWebhookUpdateRequest; res: AdminSystemWebhookUpdateResponse };
+	'admin/unset-mfa': { req: AdminUnsetMfaRequest; res: EmptyResponse };
 	'admin/unset-user-avatar': { req: AdminUnsetUserAvatarRequest; res: EmptyResponse };
 	'admin/unset-user-banner': { req: AdminUnsetUserBannerRequest; res: EmptyResponse };
 	'admin/unsuspend-user': { req: AdminUnsuspendUserRequest; res: EmptyResponse };
@@ -790,6 +836,12 @@ export type Endpoints = {
 	'admin/update-meta': { req: AdminUpdateMetaRequest; res: EmptyResponse };
 	'admin/update-proxy-account': { req: AdminUpdateProxyAccountRequest; res: AdminUpdateProxyAccountResponse };
 	'admin/update-user-note': { req: AdminUpdateUserNoteRequest; res: EmptyResponse };
+	'admin/verification/approve': { req: AdminVerificationApproveRequest; res: EmptyResponse };
+	'admin/verification/document': { req: AdminVerificationDocumentRequest; res: AdminVerificationDocumentResponse };
+	'admin/verification/list': { req: AdminVerificationListRequest; res: AdminVerificationListResponse };
+	'admin/verification/reject': { req: AdminVerificationRejectRequest; res: EmptyResponse };
+	'admin/verification/revoke': { req: AdminVerificationRevokeRequest; res: EmptyResponse };
+	'admin/verification/show': { req: AdminVerificationShowRequest; res: AdminVerificationShowResponse };
 	'announcements': { req: AnnouncementsRequest; res: AnnouncementsResponse };
 	'announcements/show': { req: AnnouncementsShowRequest; res: AnnouncementsShowResponse };
 	'antennas/create': { req: AntennasCreateRequest; res: AntennasCreateResponse };
@@ -801,13 +853,6 @@ export type Endpoints = {
 	'antennas/update': { req: AntennasUpdateRequest; res: AntennasUpdateResponse };
 	'ap/get': { req: ApGetRequest; res: ApGetResponse };
 	'ap/show': { req: ApShowRequest; res: ApShowResponse };
-	'apk/resources/create': { req: ApkResourcesCreateRequest; res: ApkResourcesCreateResponse };
-	'apk/resources/delete': { req: ApkResourcesDeleteRequest; res: EmptyResponse };
-	'apk/resources/download': { req: ApkResourcesDownloadRequest; res: ApkResourcesDownloadResponse };
-	'apk/resources/list': { req: ApkResourcesListRequest; res: ApkResourcesListResponse };
-	'apk/resources/show': { req: ApkResourcesShowRequest; res: ApkResourcesShowResponse };
-	'apk/resources/update': { req: ApkResourcesUpdateRequest; res: ApkResourcesUpdateResponse };
-	'apk/resources/versions': { req: ApkResourcesVersionsRequest; res: ApkResourcesVersionsResponse };
 	'app/create': { req: AppCreateRequest; res: AppCreateResponse };
 	'app/show': { req: AppShowRequest; res: AppShowResponse };
 	'auth/accept': { req: AuthAcceptRequest; res: EmptyResponse };
@@ -847,15 +892,35 @@ export type Endpoints = {
 	'charts/user/pv': { req: ChartsUserPvRequest; res: ChartsUserPvResponse };
 	'charts/user/reactions': { req: ChartsUserReactionsRequest; res: ChartsUserReactionsResponse };
 	'charts/users': { req: ChartsUsersRequest; res: ChartsUsersResponse };
+	'chat/attachments/create': { req: ChatAttachmentsCreateRequest; res: ChatAttachmentsCreateResponse };
+	'chat/attachments/delete': { req: ChatAttachmentsDeleteRequest; res: EmptyResponse };
+	'chat/attachments/import-drive': { req: ChatAttachmentsImportDriveRequest; res: ChatAttachmentsImportDriveResponse };
+	'chat/attachments/show': { req: ChatAttachmentsShowRequest; res: ChatAttachmentsShowResponse };
+	'chat/blocking/create': { req: ChatBlockingCreateRequest; res: EmptyResponse };
+	'chat/blocking/delete': { req: ChatBlockingDeleteRequest; res: EmptyResponse };
+	'chat/blocking/list': { req: ChatBlockingListRequest; res: ChatBlockingListResponse };
+	'chat/contact-groups/add-user': { req: ChatContactGroupsAddUserRequest; res: EmptyResponse };
+	'chat/contact-groups/create': { req: ChatContactGroupsCreateRequest; res: ChatContactGroupsCreateResponse };
+	'chat/contact-groups/delete': { req: ChatContactGroupsDeleteRequest; res: EmptyResponse };
+	'chat/contact-groups/list': { req: EmptyRequest; res: ChatContactGroupsListResponse };
+	'chat/contact-groups/remove-user': { req: ChatContactGroupsRemoveUserRequest; res: EmptyResponse };
+	'chat/contact-groups/update': { req: ChatContactGroupsUpdateRequest; res: ChatContactGroupsUpdateResponse };
+	'chat/conversation-settings/show': { req: ChatConversationSettingsShowRequest; res: ChatConversationSettingsShowResponse };
+	'chat/conversation-settings/update': { req: ChatConversationSettingsUpdateRequest; res: ChatConversationSettingsUpdateResponse };
+	'chat/conversations': { req: ChatConversationsRequest; res: ChatConversationsResponse };
 	'chat/history': { req: ChatHistoryRequest; res: ChatHistoryResponse };
+	'chat/messages/context': { req: ChatMessagesContextRequest; res: ChatMessagesContextResponse };
 	'chat/messages/create-to-room': { req: ChatMessagesCreateToRoomRequest; res: ChatMessagesCreateToRoomResponse };
 	'chat/messages/create-to-user': { req: ChatMessagesCreateToUserRequest; res: ChatMessagesCreateToUserResponse };
 	'chat/messages/delete': { req: ChatMessagesDeleteRequest; res: EmptyResponse };
 	'chat/messages/react': { req: ChatMessagesReactRequest; res: EmptyResponse };
+	'chat/messages/read': { req: ChatMessagesReadRequest; res: ChatMessagesReadResponse };
 	'chat/messages/room-timeline': { req: ChatMessagesRoomTimelineRequest; res: ChatMessagesRoomTimelineResponse };
 	'chat/messages/search': { req: ChatMessagesSearchRequest; res: ChatMessagesSearchResponse };
 	'chat/messages/show': { req: ChatMessagesShowRequest; res: ChatMessagesShowResponse };
+	'chat/messages/state': { req: ChatMessagesStateRequest; res: ChatMessagesStateResponse };
 	'chat/messages/unreact': { req: ChatMessagesUnreactRequest; res: EmptyResponse };
+	'chat/messages/update': { req: ChatMessagesUpdateRequest; res: ChatMessagesUpdateResponse };
 	'chat/messages/user-timeline': { req: ChatMessagesUserTimelineRequest; res: ChatMessagesUserTimelineResponse };
 	'chat/read-all': { req: EmptyRequest; res: EmptyResponse };
 	'chat/rooms/create': { req: ChatRoomsCreateRequest; res: ChatRoomsCreateResponse };
@@ -872,6 +937,7 @@ export type Endpoints = {
 	'chat/rooms/owned': { req: ChatRoomsOwnedRequest; res: ChatRoomsOwnedResponse };
 	'chat/rooms/show': { req: ChatRoomsShowRequest; res: ChatRoomsShowResponse };
 	'chat/rooms/update': { req: ChatRoomsUpdateRequest; res: ChatRoomsUpdateResponse };
+	'chat/unread-summary': { req: EmptyRequest; res: ChatUnreadSummaryResponse };
 	'clips/add-note': { req: ClipsAddNoteRequest; res: EmptyResponse };
 	'clips/create': { req: ClipsCreateRequest; res: ClipsCreateResponse };
 	'clips/delete': { req: ClipsDeleteRequest; res: EmptyResponse };
@@ -948,6 +1014,7 @@ export type Endpoints = {
 	'gallery/posts/show': { req: GalleryPostsShowRequest; res: GalleryPostsShowResponse };
 	'gallery/posts/unlike': { req: GalleryPostsUnlikeRequest; res: EmptyResponse };
 	'gallery/posts/update': { req: GalleryPostsUpdateRequest; res: GalleryPostsUpdateResponse };
+	'games/snake/session': { req: EmptyRequest; res: GamesSnakeSessionResponse };
 	'get-avatar-decorations': { req: EmptyRequest; res: GetAvatarDecorationsResponse };
 	'get-online-users-count': { req: EmptyRequest; res: GetOnlineUsersCountResponse };
 	'hashtags/list': { req: HashtagsListRequest; res: HashtagsListResponse };
@@ -966,6 +1033,7 @@ export type Endpoints = {
 	'i/2fa/update-key': { req: I2faUpdateKeyRequest; res: EmptyResponse };
 	'i/apps': { req: IAppsRequest; res: IAppsResponse };
 	'i/authorized-apps': { req: IAuthorizedAppsRequest; res: IAuthorizedAppsResponse };
+	'i/bind-phone': { req: IBindPhoneRequest; res: EmptyResponse };
 	'i/change-password': { req: IChangePasswordRequest; res: EmptyResponse };
 	'i/claim-achievement': { req: IClaimAchievementRequest; res: EmptyResponse };
 	'i/delete-account': { req: IDeleteAccountRequest; res: EmptyResponse };
@@ -1018,10 +1086,17 @@ export type Endpoints = {
 	'invite/list': { req: InviteListRequest; res: InviteListResponse };
 	'meta': { req: MetaRequest; res: MetaResponse };
 	'miauth/gen-token': { req: MiauthGenTokenRequest; res: MiauthGenTokenResponse };
+	'music-charts/history': { req: MusicChartsHistoryRequest; res: MusicChartsHistoryResponse };
+	'music-charts/kpop-chart': { req: MusicChartsKpopChartRequest; res: MusicChartsKpopChartResponse };
+	'music-charts/kpop-history': { req: MusicChartsKpopHistoryRequest; res: MusicChartsKpopHistoryResponse };
+	'music-charts/kpop-summary': { req: MusicChartsKpopSummaryRequest; res: MusicChartsKpopSummaryResponse };
+	'music-charts/summary': { req: EmptyRequest; res: MusicChartsSummaryResponse };
 	'mute/create': { req: MuteCreateRequest; res: EmptyResponse };
 	'mute/delete': { req: MuteDeleteRequest; res: EmptyResponse };
 	'mute/list': { req: MuteListRequest; res: MuteListResponse };
 	'my/apps': { req: MyAppsRequest; res: MyAppsResponse };
+	'native-push/register': { req: NativePushRegisterRequest; res: NativePushRegisterResponse };
+	'native-push/unregister': { req: NativePushUnregisterRequest; res: EmptyResponse };
 	'notes': { req: NotesRequest; res: NotesResponse };
 	'notes/children': { req: NotesChildrenRequest; res: NotesChildrenResponse };
 	'notes/clips': { req: NotesClipsRequest; res: NotesClipsResponse };
@@ -1055,6 +1130,7 @@ export type Endpoints = {
 	'notes/thread-muting/create': { req: NotesThreadMutingCreateRequest; res: EmptyResponse };
 	'notes/thread-muting/delete': { req: NotesThreadMutingDeleteRequest; res: EmptyResponse };
 	'notes/timeline': { req: NotesTimelineRequest; res: NotesTimelineResponse };
+	'notes/topic-timeline': { req: NotesTopicTimelineRequest; res: NotesTopicTimelineResponse };
 	'notes/translate': { req: NotesTranslateRequest; res: NotesTranslateResponse };
 	'notes/unrenote': { req: NotesUnrenoteRequest; res: EmptyResponse };
 	'notes/user-list-timeline': { req: NotesUserListTimelineRequest; res: NotesUserListTimelineResponse };
@@ -1077,8 +1153,10 @@ export type Endpoints = {
 	'renote-mute/delete': { req: RenoteMuteDeleteRequest; res: EmptyResponse };
 	'renote-mute/list': { req: RenoteMuteListRequest; res: RenoteMuteListResponse };
 	'request-reset-password': { req: RequestResetPasswordRequest; res: EmptyResponse };
+	'request-reset-password-phone': { req: RequestResetPasswordPhoneRequest; res: EmptyResponse };
 	'reset-db': { req: EmptyRequest; res: EmptyResponse };
 	'reset-password': { req: ResetPasswordRequest; res: EmptyResponse };
+	'reset-password-phone': { req: ResetPasswordPhoneRequest; res: EmptyResponse };
 	'retention': { req: EmptyRequest; res: RetentionResponse };
 	'reversi/cancel-match': { req: ReversiCancelMatchRequest; res: EmptyResponse };
 	'reversi/games': { req: ReversiGamesRequest; res: ReversiGamesResponse };
@@ -1132,6 +1210,10 @@ export type Endpoints = {
 	'users/show': { req: UsersShowRequest; res: UsersShowResponse };
 	'users/update-memo': { req: UsersUpdateMemoRequest; res: EmptyResponse };
 	'v2/admin/emoji/list': { req: V2AdminEmojiListRequest; res: V2AdminEmojiListResponse };
+	'verification/create': { req: VerificationCreateRequest; res: VerificationCreateResponse };
+	'verification/show': { req: EmptyRequest; res: VerificationShowResponse };
+	'verification/upload': { req: VerificationUploadRequest; res: VerificationUploadResponse };
+	'verification/withdraw': { req: EmptyRequest; res: EmptyResponse };
 	'verify-email': { req: VerifyEmailRequest; res: EmptyResponse };
 };
 
@@ -1139,5 +1221,7 @@ export type Endpoints = {
  * NOTE: The content-type for all endpoints not listed here is application/json.
  */
 export const endpointReqTypes = {
+	'chat/attachments/create': 'multipart/form-data',
 	'drive/files/create': 'multipart/form-data',
+	'verification/upload': 'multipart/form-data',
 } as const satisfies { [K in keyof Endpoints]?: 'multipart/form-data'; };

@@ -112,6 +112,11 @@ const menuDef = computed<SuperMenuDef[]>(() => [{
 		to: '/admin/users',
 		active: currentPage.value?.route.name === 'users',
 	}, {
+		icon: 'ti ti-badge',
+		text: i18n.ts._verification.adminTitle,
+		to: '/admin/verification',
+		active: currentPage.value?.route.name === 'verification',
+	}, {
 		icon: 'ti ti-user-plus',
 		text: i18n.ts.invite,
 		to: '/admin/invites',
@@ -156,11 +161,6 @@ const menuDef = computed<SuperMenuDef[]>(() => [{
 		text: i18n.ts.files,
 		to: '/admin/files',
 		active: currentPage.value?.route.name === 'files',
-	}, {
-		icon: 'ti ti-packages',
-		text: 'APK 资源审核',
-		to: '/admin/apk-resources',
-		active: currentPage.value?.route.name === 'apk-resources',
 	}, {
 		icon: 'ti ti-speakerphone',
 		text: i18n.ts.announcements,

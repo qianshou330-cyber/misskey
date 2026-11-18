@@ -3,9 +3,36 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
+import { chatAttachmentSchema } from './chat-attachment.js';
+
+const chatMessageStateProperties = {
+	replyToId: { type: 'string', optional: true, nullable: true },
+	replyTo: {
+		type: 'object', optional: true, nullable: true, properties: {
+			id: { type: 'string', optional: false, nullable: false },
+			fromUserId: { type: 'string', optional: false, nullable: true },
+			text: { type: 'string', optional: false, nullable: true },
+			attachmentTypes: { type: 'array', optional: false, nullable: false, items: { type: 'string', enum: ['image', 'file', 'voice'], optional: false, nullable: false } },
+			revision: { type: 'integer', optional: false, nullable: false },
+			recalledAt: { type: 'string', format: 'date-time', optional: false, nullable: true },
+			unavailable: { type: 'boolean', optional: false, nullable: false },
+		},
+	},
+	privateAttachmentFallback: { type: 'boolean', optional: true, nullable: false },
+	attachments: { type: 'array', optional: true, nullable: false, items: chatAttachmentSchema },
+	clientMessageId: { type: 'string', optional: true, nullable: true },
+	revision: { type: 'integer', optional: true, nullable: false },
+	editedAt: { type: 'string', format: 'date-time', optional: true, nullable: true },
+	recalledAt: { type: 'string', format: 'date-time', optional: true, nullable: true },
+	readTracked: { type: 'boolean', optional: true, nullable: false },
+	readAt: { type: 'string', format: 'date-time', optional: true, nullable: true },
+	readState: { type: 'string', enum: ['unknown', 'unread', 'read'], optional: true, nullable: false },
+} as const;
+
 export const packedChatMessageSchema = {
 	type: 'object',
 	properties: {
+		...chatMessageStateProperties,
 		id: {
 			type: 'string',
 			optional: false, nullable: false,
@@ -84,6 +111,7 @@ export const packedChatMessageSchema = {
 export const packedChatMessageLiteSchema = {
 	type: 'object',
 	properties: {
+		...chatMessageStateProperties,
 		id: {
 			type: 'string',
 			optional: false, nullable: false,
@@ -148,6 +176,7 @@ export const packedChatMessageLiteSchema = {
 export const packedChatMessageLiteFor1on1Schema = {
 	type: 'object',
 	properties: {
+		...chatMessageStateProperties,
 		id: {
 			type: 'string',
 			optional: false, nullable: false,

@@ -6,7 +6,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 <template>
 <div v-if="instance" :class="$style.root">
 	<div :class="[$style.main, $style.panel]">
-		<img :src="instance.iconUrl || '/favicon.ico'" alt="" :class="$style.mainIcon"/>
+		<img src="/static-assets/pubo-white-660-v1.webp" alt="PUBO" width="660" height="221" :class="$style.mainIcon"/>
 		<button class="_button _acrylic" :class="$style.mainMenu" @click="showMenu"><i class="ti ti-dots"></i></button>
 		<div :class="$style.mainFg">
 			<h1 :class="$style.mainTitle">
@@ -24,59 +24,52 @@ SPDX-License-Identifier: AGPL-3.0-only
 				<MkInfo v-else-if="instance.federation === 'none'" warn>{{ i18n.ts.federationDisabled }}</MkInfo>
 			</div>
 			<div class="_gaps_s" :class="$style.mainActions">
-				<MkButton :class="$style.mainAction" full rounded gradate data-cy-signup style="margin-right: 12px;" @click="signup()">{{ i18n.ts.joinThisServer }}</MkButton>
-				<MkButton :class="$style.mainAction" full rounded type="a" target="_blank" rel="noopener" href="https://misskey-hub.net/servers/">{{ i18n.ts.exploreOtherServers }}</MkButton>
-				<MkButton :class="$style.mainAction" full rounded data-cy-signin @click="signin()">{{ i18n.ts.login }}</MkButton>
+				<MkButton :class="[$style.mainAction, $style.signupAction]" full rounded primary data-testid="signup" @click="signup()">注册</MkButton>
+				<MkButton :class="$style.mainAction" full rounded data-testid="signin" @click="signin()">{{ i18n.ts.login }}</MkButton>
+				<MkA to="/download/android" :class="$style.mainAction"><i class="ti ti-brand-android" aria-hidden="true"></i> {{ i18n.ts._androidApp.download }}</MkA>
 			</div>
 		</div>
 	</div>
-	<div v-if="stats && instance.clientOptions.showActivitiesForVisitor !== false" :class="$style.stats">
-		<div :class="[$style.statsItem, $style.panel]">
-			<div :class="$style.statsItemLabel">{{ i18n.ts.users }}</div>
-			<div :class="$style.statsItemCount"><MkNumber :value="stats.originalUsersCount"/></div>
-		</div>
-		<div :class="[$style.statsItem, $style.panel]">
-			<div :class="$style.statsItemLabel">{{ i18n.ts.notes }}</div>
-			<div :class="$style.statsItemCount"><MkNumber :value="stats.originalNotesCount"/></div>
-		</div>
-	</div>
-	<div v-if="instance.policies.ltlAvailable && instance.clientOptions.showTimelineForVisitor !== false" :class="[$style.tl, $style.panel]">
+	<MkHomeAnnouncements v-if="showMusicCharts"/>
+	<MkDeferredSection v-if="showMusicCharts" :loader="loadMusicCharts" :deferred="staged" :minHeight="240">
+		<template #default="{ component }"><component :is="component"/></template>
+	</MkDeferredSection>
+	<div v-if="showTimeline && (instance.policies.gtlAvailable || instance.policies.ltlAvailable) && instance.clientOptions.showTimelineForVisitor !== false" :class="[$style.tl, $style.panel]">
 		<div :class="$style.tlHeader">{{ i18n.ts.letsLookAtTimeline }}</div>
 		<div :class="$style.tlBody">
-			<MkStreamingNotesTimeline src="local"/>
+			<MkDeferredSection :loader="loadTimeline" :deferred="staged" :minHeight="350">
+				<template #default="{ component }"><component :is="component" :src="visitorTimeline" :forceRealtime="true"/></template>
+			</MkDeferredSection>
 		</div>
 	</div>
 	<div v-if="instance.clientOptions.showActivitiesForVisitor !== false" :class="$style.panel">
-		<XActiveUsersChart/>
+		<MkDeferredSection :loader="loadActivities" :deferred="staged" :nearViewport="staged" :minHeight="150">
+			<template #default="{ component }"><component :is="component"/></template>
+		</MkDeferredSection>
 	</div>
 </div>
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue';
-import * as Misskey from 'misskey-js';
+import { computed } from 'vue';
 import { instanceName } from '@@/js/config.js';
-import type { MenuItem } from '@/types/menu.js';
 import XSigninDialog from '@/components/MkSigninDialog.vue';
 import XSignupDialog from '@/components/MkSignupDialog.vue';
 import MkButton from '@/components/MkButton.vue';
-import MkStreamingNotesTimeline from '@/components/MkStreamingNotesTimeline.vue';
+import MkDeferredSection from '@/components/MkDeferredSection.vue';
 import MkInfo from '@/components/MkInfo.vue';
+import MkHomeAnnouncements from '@/components/MkHomeAnnouncements.vue';
 import * as os from '@/os.js';
-import { misskeyApi } from '@/utility/misskey-api.js';
 import { i18n } from '@/i18n.js';
 import { instance } from '@/instance.js';
-import MkNumber from '@/components/MkNumber.vue';
-import XActiveUsersChart from '@/components/MkVisitorDashboard.ActiveUsersChart.vue';
 import { openInstanceMenu } from '@/ui/_common_/common.js';
 
-const stats = ref<Misskey.entities.StatsResponse | null>(null);
+withDefaults(defineProps<{ showMusicCharts?: boolean; showTimeline?: boolean; staged?: boolean }>(), { showMusicCharts: false, showTimeline: true, staged: false });
+const loadMusicCharts = () => import('@/components/MkWelcomeMusicCharts.vue');
+const loadTimeline = () => import('@/components/MkStreamingNotesTimeline.vue');
+const loadActivities = () => import('@/components/MkVisitorDashboard.ActiveUsersChart.vue');
 
-if (instance.clientOptions.showActivitiesForVisitor !== false) {
-	misskeyApi('stats', {}).then((res) => {
-		stats.value = res;
-	});
-}
+const visitorTimeline = computed<'local' | 'global'>(() => instance.policies.gtlAvailable ? 'global' : 'local');
 
 function signin() {
 	const { dispose } = os.popup(XSigninDialog, {
@@ -120,10 +113,12 @@ function showMenu(ev: PointerEvent) {
 }
 
 .mainIcon {
-	width: 85px;
-	margin-top: -47px;
+	width: min(220px, 70%);
+	height: auto;
+	margin-top: -42px;
 	vertical-align: bottom;
 	filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.5));
+	object-fit: contain;
 }
 
 .mainMenu {
@@ -171,26 +166,9 @@ function showMenu(ev: PointerEvent) {
 	line-height: 28px;
 }
 
-.stats {
-	display: grid;
-	grid-template-columns: 1fr 1fr;
-	grid-gap: 16px;
-}
-
-.statsItem {
-	overflow: clip;
-	padding: 16px 20px;
-}
-
-.statsItemLabel {
-	color: color(from var(--MI_THEME-fg) srgb r g b / 0.75);
-	font-size: 0.9em;
-}
-
-.statsItemCount {
-	font-weight: bold;
-	font-size: 1.2em;
-	color: var(--MI_THEME-accent);
+.signupAction {
+	--MI_THEME-accent: #2dc100;
+	--MI_THEME-fgOnAccent: #fff;
 }
 
 .tl {

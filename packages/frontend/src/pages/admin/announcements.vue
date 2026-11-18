@@ -46,6 +46,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<template #label>{{ i18n.ts.imageUrl }}</template>
 						</MkInput>
 						<MkRadios
+							v-if="announcement.display !== 'marquee'"
 							v-model="announcement.icon"
 							:options="[
 								{ value: 'info', icon: 'ti ti-info-circle' },
@@ -62,18 +63,20 @@ SPDX-License-Identifier: AGPL-3.0-only
 								{ value: 'normal', label: i18n.ts.normal },
 								{ value: 'banner', label: i18n.ts.banner },
 								{ value: 'dialog', label: i18n.ts.dialog },
+								...(announcement.userId == null ? [{ value: 'marquee', label: i18n.ts._homeAnnouncements.display }] : []),
 							]"
 						>
 							<template #label>{{ i18n.ts.display }}</template>
 						</MkRadios>
 						<MkInfo v-if="announcement.display === 'dialog'" warn>{{ i18n.ts._announcement.dialogAnnouncementUxWarn }}</MkInfo>
-						<MkSwitch v-model="announcement.forExistingUsers" :helpText="i18n.ts._announcement.forExistingUsersDescription">
+						<MkInfo v-if="announcement.display === 'marquee'">{{ i18n.ts._homeAnnouncements.adminDescription }}</MkInfo>
+						<MkSwitch v-if="announcement.display !== 'marquee'" v-model="announcement.forExistingUsers" :helpText="i18n.ts._announcement.forExistingUsersDescription">
 							{{ i18n.ts._announcement.forExistingUsers }}
 						</MkSwitch>
-						<MkSwitch v-model="announcement.silence" :helpText="i18n.ts._announcement.silenceDescription">
+						<MkSwitch v-if="announcement.display !== 'marquee'" v-model="announcement.silence" :helpText="i18n.ts._announcement.silenceDescription">
 							{{ i18n.ts._announcement.silence }}
 						</MkSwitch>
-						<MkSwitch v-model="announcement.needConfirmationToRead" :helpText="i18n.ts._announcement.needConfirmationToReadDescription">
+						<MkSwitch v-if="announcement.display !== 'marquee'" v-model="announcement.needConfirmationToRead" :helpText="i18n.ts._announcement.needConfirmationToReadDescription">
 							{{ i18n.ts._announcement.needConfirmationToRead }}
 						</MkSwitch>
 						<p v-if="announcement.reads">{{ i18n.tsx.nUsersRead({ n: announcement.reads }) }}</p>

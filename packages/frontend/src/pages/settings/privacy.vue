@@ -6,7 +6,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 <template>
 <SearchMarker path="/settings/privacy" :label="i18n.ts.privacy" :keywords="['privacy']" icon="ti ti-lock-open">
 	<div class="_gaps_m">
-		<MkFeatureBanner icon="/client-assets/unlocked_3d.png" color="#aeff00">
+		<MkFeatureBanner icon="/fluent-emoji/1f513.png" color="#aeff00">
 			<SearchText>{{ i18n.ts._settings.privacyBanner }}</SearchText>
 		</MkFeatureBanner>
 
@@ -81,7 +81,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<SearchMarker :keywords="['chat']">
 						<MkSelect v-model="chatScope" :items="chatScopeDef" @update:modelValue="save()">
 							<template #label><SearchLabel>{{ i18n.ts._chat.chatAllowedUsers }}</SearchLabel></template>
-							<template #caption>{{ i18n.ts._chat.chatAllowedUsers_note }}</template>
+							<template #caption>
+								{{ i18n.ts._chat.chatAllowedUsers_note }}
+								<div v-if="chatScope === 'mutual'">{{ i18n.ts._chatPro.mutualFirstMessageHint }}</div>
+							</template>
 						</MkSelect>
 					</SearchMarker>
 				</div>

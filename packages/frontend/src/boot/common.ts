@@ -5,9 +5,9 @@
 
 import { watch, version as vueVersion } from 'vue';
 import { compareVersions } from 'compare-versions';
-import { version, lang, apiUrl, isSafeMode } from '@@/js/config.js';
+import { version, lang, isSafeMode } from '@@/js/config.js';
 import defaultLightTheme from '@@/themes/l-light.json5';
-import defaultDarkTheme from '@@/themes/d-nexushub.json5';
+import defaultDarkTheme from '@@/themes/d-green-lime.json5';
 import { storeBootloaderErrors } from '@@/js/store-boot-errors';
 import type { App } from 'vue';
 import widgets from '@/widgets/index.js';
@@ -17,7 +17,7 @@ import { themeManager } from '@/theme.js';
 import { isDeviceDarkmode } from '@/utility/is-device-darkmode.js';
 import { i18n } from '@/i18n.js';
 import { refreshCurrentAccount, login } from '@/accounts.js';
-import { store } from '@/store.js';
+import { migrateTimelineDefault, store } from '@/store.js';
 import { fetchInstance, instance } from '@/instance.js';
 import { updateDeviceKind } from '@/utility/device-kind.js';
 import { reloadChannel } from '@/utility/unison-reload.js';
@@ -30,6 +30,7 @@ import { fetchCustomEmojis } from '@/custom-emojis.js';
 import { prefer } from '@/preferences.js';
 import { $i } from '@/i.js';
 import { launchPlugins } from '@/plugin.js';
+import { initTelemetry } from '@/telemetry.js';
 
 export async function common(createVue: () => Promise<App<Element>>) {
 	console.info(`Misskey v${version}`);
@@ -115,13 +116,20 @@ export async function common(createVue: () => Promise<App<Element>>) {
 	//#endregion
 
 	await store.ready;
+	if ($i && !store.s.timelineLocalDefaultMigrated) {
+		const migration = migrateTimelineDefault(store.s.tl, store.s.timelineLocalDefaultMigrated);
+		if (migration.timeline !== store.s.tl) {
+			await store.set('tl', migration.timeline);
+		}
+		await store.set('timelineLocalDefaultMigrated', migration.migrated);
+	}
 	await deckStore.ready;
 
-	const fetchInstanceMetaPromise = fetchInstance();
+	const fetchInstanceMetaPromise = fetchInstance(false, $i ? {} : { timeoutMs: 8000 });
 
 	fetchInstanceMetaPromise.then(() => {
 		miLocalStorage.setItem('v', instance.version);
-	});
+	}).catch(() => { /* Retain the metadata supplied with the page when refresh fails. */ });
 
 	//#region loginId
 	const params = new URLSearchParams(window.location.search);
@@ -241,9 +249,8 @@ export async function common(createVue: () => Promise<App<Element>>) {
 	}
 	//#endregion
 
-	try {
-		await fetchCustomEmojis();
-	} catch (err) { /* empty */ }
+	// Custom emoji metadata is optional: cached data and late responses update the UI reactively.
+	void fetchCustomEmojis().catch(() => { /* Keep cached emoji data, or display emoji shortcodes. */ });
 
 	// analytics
 	fetchInstanceMetaPromise.then(async () => {
@@ -256,7 +263,7 @@ export async function common(createVue: () => Promise<App<Element>>) {
 		analytics.page({
 			path: window.location.pathname,
 		});
-	});
+	}).catch(() => { /* Analytics must not interrupt boot on a failed metadata request. */ });
 
 	const app = await createVue();
 
@@ -286,40 +293,7 @@ export async function common(createVue: () => Promise<App<Element>>) {
 		return root;
 	})();
 
-	if (instance.sentryForFrontend) {
-		const Sentry = await import('@sentry/vue');
-		Sentry.init({
-			app,
-			integrations: [
-				...(instance.sentryForFrontend.vueIntegration !== undefined ? [
-					Sentry.vueIntegration(instance.sentryForFrontend.vueIntegration ?? undefined),
-				] : []),
-				...(instance.sentryForFrontend.browserTracingIntegration !== undefined ? [
-					Sentry.browserTracingIntegration(instance.sentryForFrontend.browserTracingIntegration ?? undefined),
-				] : []),
-				...(instance.sentryForFrontend.replayIntegration !== undefined ? [
-					Sentry.replayIntegration(instance.sentryForFrontend.replayIntegration ?? undefined),
-				] : []),
-			],
-
-			// Set tracesSampleRate to 1.0 to capture 100%
-			tracesSampleRate: 1.0,
-
-			// Set `tracePropagationTargets` to control for which URLs distributed tracing should be enabled
-			...(instance.sentryForFrontend.browserTracingIntegration !== undefined ? {
-				tracePropagationTargets: [apiUrl],
-			} : {}),
-
-			// Capture Replay for 10% of all sessions,
-			// plus for 100% of sessions with an error
-			...(instance.sentryForFrontend.replayIntegration !== undefined ? {
-				replaysSessionSampleRate: 0.1,
-				replaysOnErrorSampleRate: 1.0,
-			} : {}),
-
-			...instance.sentryForFrontend.options,
-		});
-	}
+	await initTelemetry(instance, app);
 
 	try {
 		await launchPlugins();

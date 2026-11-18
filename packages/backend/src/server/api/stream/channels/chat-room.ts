@@ -37,6 +37,7 @@ export class ChatRoomChannel extends Channel {
 	public async init(params: JsonObject): Promise<boolean> {
 		if (typeof params.roomId !== 'string') return false;
 		if (!this.user) return false;
+		if (!await this.chatService.canReadChatStream(this.user, this.connection.token)) return false;
 
 		this.roomId = params.roomId;
 
@@ -54,15 +55,24 @@ export class ChatRoomChannel extends Channel {
 
 	@bindThis
 	private async onEvent(data: GlobalEvents['chatRoom']['payload']) {
+		if (!await this.canRead()) return;
 		this.send(data.type, data.body);
 	}
 
 	@bindThis
-	public onMessage(type: string, body: any) {
+	private async canRead(): Promise<boolean> {
+		if (!this.user || !await this.chatService.canReadChatStream(this.user, this.connection.token)) return false;
+		const room = await this.chatRoomsRepository.findOneBy({ id: this.roomId });
+		return room != null && await this.chatService.hasPermissionToViewRoomTimeline(this.user.id, room);
+	}
+
+	@bindThis
+	public async onMessage(type: string, body: any) {
+		if (!await this.canRead()) return;
 		switch (type) {
 			case 'read':
 				if (this.roomId) {
-					this.chatService.readRoomChatMessage(this.user!.id, this.roomId);
+					await this.chatService.readRoomChatMessage(this.user!.id, this.roomId);
 				}
 				break;
 		}

@@ -4,7 +4,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 -->
 
 <template>
-<div :class="[$style.root, { '_forceShrinkSpacer': deviceKind === 'smartphone' }]">
+<div :class="[$style.root, { '_forceShrinkSpacer': deviceKind === 'smartphone', [$style.chatViewport]: isMobile && isChatConversation }]" :style="chatViewportStyle">
 	<XTitlebar v-if="prefer.r.showTitlebar.value" style="flex-shrink: 0;"/>
 
 	<div :class="$style.nonTitlebarArea">
@@ -20,7 +20,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 			</div>
 			<StackingRouterView v-if="prefer.s['experimental.stackingRouterView']" :class="$style.content"/>
 			<RouterView v-else :class="$style.content"/>
-			<XMobileFooterMenu v-if="isMobile" ref="navFooter" v-model:drawerMenuShowing="drawerMenuShowing" v-model:widgetsShowing="widgetsShowing"/>
+			<XMobileFooterMenu v-if="isMobile && !isChatConversation" ref="navFooter" v-model:drawerMenuShowing="drawerMenuShowing" v-model:widgetsShowing="widgetsShowing"/>
 		</div>
 
 		<div v-if="showWidgetsSide && !pageMetadata?.needWideArea" :class="$style.widgets">
@@ -56,12 +56,17 @@ import { prefer } from '@/preferences.js';
 import { shouldSuggestRestoreBackup } from '@/preferences/utility.js';
 import { DI } from '@/di.js';
 import { shouldSuggestReload } from '@/utility/reload-suggest.js';
+import { useVisualViewport } from '@/composables/use-visual-viewport.js';
 
 const XWidgets = defineAsyncComponent(() => import('./_common_/widgets.vue'));
 const XStatusBars = defineAsyncComponent(() => import('@/ui/_common_/statusbars.vue'));
 const XAnnouncements = defineAsyncComponent(() => import('@/ui/_common_/announcements.vue'));
 
 const isRoot = computed(() => mainRouter.currentRoute.value.name === 'index');
+const isChatConversation = computed(() => {
+	const path = mainRouter.currentRoute.value.path;
+	return path.startsWith('/chat/user/') || path.startsWith('/chat/room/');
+});
 
 const DESKTOP_THRESHOLD = 1100;
 const MOBILE_THRESHOLD = 500;
@@ -73,6 +78,8 @@ const isMobile = ref(deviceKind === 'smartphone' || window.innerWidth <= MOBILE_
 window.addEventListener('resize', () => {
 	isMobile.value = deviceKind === 'smartphone' || window.innerWidth <= MOBILE_THRESHOLD;
 });
+
+const chatViewportStyle = useVisualViewport(computed(() => isMobile.value && isChatConversation.value));
 
 const pageMetadata = ref<null | PageMetadata>(null);
 const widgetsShowing = ref(false);
@@ -134,6 +141,14 @@ $widgets-hide-threshold: 1090px;
 	display: flex;
 	flex-direction: column;
 	background: var(--MI_THEME-navBg);
+}
+
+.chatViewport {
+	position: fixed;
+	top: var(--MI-chatViewportTop, 0px);
+	left: var(--MI-chatViewportLeft, 0px);
+	width: var(--MI-chatViewportWidth, 100%);
+	height: var(--MI-chatViewportHeight, 100dvh);
 }
 
 .nonTitlebarArea {

@@ -3,14 +3,14 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import ms from 'ms';
 import { Endpoint } from '@/server/api/endpoint-base.js';
 import { GetterService } from '@/server/api/GetterService.js';
-import { DI } from '@/di-symbols.js';
 import { ApiError } from '@/server/api/error.js';
 import { ChatService } from '@/core/ChatService.js';
-import type { DriveFilesRepository, MiUser } from '@/models/_.js';
+import { ChatAttachmentService } from '@/core/ChatAttachmentService.js';
+import { chatProErrors, throwChatProError } from '../chat-pro-errors.js';
 
 export const meta = {
 	tags: ['chat'],
@@ -33,6 +33,12 @@ export const meta = {
 	},
 
 	errors: {
+		...chatProErrors,
+		clientUpgradeRequired: {
+			message: 'Update your client to send private Chat attachments using attachmentIds. Legacy fileId sends are not supported.',
+			code: 'CHAT_CLIENT_UPGRADE_REQUIRED',
+			id: '12c5f017-0a02-40f2-8299-4575fdf3920e',
+		},
 		recipientIsYourself: {
 			message: 'You can not send a message to yourself.',
 			code: 'RECIPIENT_IS_YOURSELF',
@@ -52,7 +58,7 @@ export const meta = {
 		},
 
 		contentRequired: {
-			message: 'Content required. You need to set text or fileId.',
+			message: 'Content required. You need to set text or attachmentIds.',
 			code: 'CONTENT_REQUIRED',
 			id: '25587321-b0e6-449c-9239-f8925092942c',
 		},
@@ -71,6 +77,9 @@ export const paramDef = {
 		text: { type: 'string', nullable: true, maxLength: 2000 },
 		fileId: { type: 'string', format: 'misskey:id' },
 		toUserId: { type: 'string', format: 'misskey:id' },
+		replyToId: { type: 'string', format: 'misskey:id', nullable: true },
+		clientMessageId: { type: 'string', minLength: 1, maxLength: 64, pattern: '^[a-zA-Z0-9_-]+$' },
+		attachmentIds: { type: 'array', maxItems: 10, uniqueItems: true, items: { type: 'string', format: 'misskey:id' } },
 	},
 	required: ['toUserId'],
 } as const;
@@ -78,29 +87,24 @@ export const paramDef = {
 @Injectable()
 export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-disable-line import/no-default-export
 	constructor(
-		@Inject(DI.driveFilesRepository)
-		private driveFilesRepository: DriveFilesRepository,
-
 		private getterService: GetterService,
 		private chatService: ChatService,
+		private chatAttachmentService: ChatAttachmentService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
+			// Old clients upload through public Drive first. Never silently import that
+			// source as if this request had created a private Chat attachment.
+			if (ps.fileId != null) throw new ApiError(meta.errors.clientUpgradeRequired);
 			await this.chatService.checkChatAvailability(me.id, 'write');
-
-			let file = null;
-			if (ps.fileId != null) {
-				file = await this.driveFilesRepository.findOneBy({
-					id: ps.fileId,
-					userId: me.id,
-				});
-
-				if (file == null) {
-					throw new ApiError(meta.errors.noSuchFile);
-				}
+			if (ps.clientMessageId) {
+				try {
+					const existing = await this.chatService.findIdempotentUserMessage(me.id, ps.toUserId, ps.clientMessageId, ps);
+					if (existing) return existing;
+				} catch (error) { throwChatProError(error); }
 			}
 
 			// テキストが無いかつ添付ファイルも無かったらエラー
-			if (ps.text == null && file == null) {
+			if (!ps.text?.trim() && !ps.attachmentIds?.length) {
 				throw new ApiError(meta.errors.contentRequired);
 			}
 
@@ -114,10 +118,18 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				throw err;
 			});
 
-			return await this.chatService.createMessageToUser(me, toUser, {
-				text: ps.text,
-				file: file,
-			});
+			try {
+				const attachmentIds = ps.attachmentIds ?? [];
+				return await this.chatService.createMessageToUser(me, toUser, {
+					text: ps.text,
+					replyToId: ps.replyToId,
+					clientMessageId: ps.clientMessageId,
+					attachmentIds: ps.attachmentIds,
+					bindAttachments: async (manager, messageId) => {
+						if (attachmentIds.length) await this.chatAttachmentService.bindToMessage(manager, { ownerId: me.id, toUserId: toUser.id, messageId, attachmentIds });
+					},
+				});
+			} catch (error) { throwChatProError(error); }
 		});
 	}
 }

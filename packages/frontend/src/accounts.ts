@@ -10,12 +10,13 @@ import type { MenuItem } from '@/types/menu.js';
 import { showSuspendedDialog } from '@/utility/show-suspended-dialog.js';
 import { i18n } from '@/i18n.js';
 import { miLocalStorage } from '@/local-storage.js';
-import { waiting, popup, popupMenu, success, alert } from '@/os.js';
+import { waiting, popup, popupMenu, popupAsyncWithDialog, success, alert } from '@/os.js';
 import { unisonReload, reloadChannel } from '@/utility/unison-reload.js';
 import { prefer } from '@/preferences.js';
 import { store } from '@/store.js';
 import { $i } from '@/i.js';
 import { signout } from '@/signout.js';
+import { cancelNativeDownload } from '@/utility/native-download.js';
 
 type AccountWithToken = Misskey.entities.MeDetailed & { token: string };
 
@@ -163,6 +164,7 @@ export async function refreshCurrentAccount() {
 }
 
 export async function login(token: AccountWithToken['token'], redirect?: string) {
+	cancelNativeDownload();
 	const showing = ref(true);
 	const { dispose } = popup(defineAsyncComponent(() => import('@/components/MkWaitingDialog.vue')), {
 		success: false,
@@ -183,6 +185,14 @@ export async function login(token: AccountWithToken['token'], redirect?: string)
 
 	await addAccount(host, me, token);
 
+	// Existing accounts without a verified phone number must bind one before use.
+	if ((me as any).phoneVerified !== true && !(me as any).isAdmin) {
+		const { dispose } = await popupAsyncWithDialog(import('@/components/MkBindPhoneDialog.vue').then(x => x.default), { token }, {
+			done: () => dispose(),
+			closed: () => dispose(),
+		});
+	}
+
 	if (redirect) {
 		// 他のタブは再読み込みするだけ
 		reloadChannel.postMessage(null);
@@ -195,6 +205,7 @@ export async function login(token: AccountWithToken['token'], redirect?: string)
 }
 
 export async function switchAccount(host: string, id: string) {
+	cancelNativeDownload();
 	const token = store.s.accountTokens[host + '/' + id];
 	if (token) {
 		login(token);

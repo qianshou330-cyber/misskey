@@ -57,7 +57,7 @@ export const meta = {
 				display: {
 					type: 'string',
 					optional: false, nullable: false,
-					enum: ['normal', 'banner', 'dialog'],
+					enum: ['normal', 'banner', 'dialog', 'marquee'],
 				},
 				isActive: {
 					type: 'boolean',

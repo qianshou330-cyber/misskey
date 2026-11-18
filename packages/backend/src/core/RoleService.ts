@@ -5,23 +5,22 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import * as Redis from 'ioredis';
-import { In } from 'typeorm';
+import { In, type EntityManager } from 'typeorm';
 import { ModuleRef } from '@nestjs/core';
 import type {
 	MiMeta,
-	MiRole,
-	MiRoleAssignment,
 	RoleAssignmentsRepository,
 	RolesRepository,
 	UsersRepository,
 } from '@/models/_.js';
 import { MemoryKVCache, MemorySingleCache } from '@/misc/cache.js';
-import type { MiUser } from '@/models/User.js';
+import { MiUser } from '@/models/User.js';
+import { MiRoleAssignment } from '@/models/RoleAssignment.js';
 import type { Config } from '@/config.js';
 import { DI } from '@/di-symbols.js';
 import { bindThis } from '@/decorators.js';
 import { CacheService } from '@/core/CacheService.js';
-import type { RoleCondFormulaValue } from '@/models/Role.js';
+import { MiRole, type RoleCondFormulaValue } from '@/models/Role.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import type { GlobalEvents } from '@/core/GlobalEventService.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
@@ -114,7 +113,6 @@ export const DEFAULT_POLICIES: RolePolicies = {
 	uploadableFileTypes: [
 		'text/*',
 		'application/json',
-		'application/vnd.android.package-archive',
 		'image/*',
 		'video/*',
 		'audio/*',
@@ -343,11 +341,14 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 	}
 
 	@bindThis
-	public async getUserRoles(userId: MiUser['id']) {
-		const roles = await this.rolesCache.fetch(() => this.rolesRepository.findBy({}));
-		const assigns = await this.getUserAssigns(userId);
+	public async getUserRoles(userId: MiUser['id'], manager?: EntityManager) {
+		// Transaction callers must use their own connection, including cold caches.
+		const roles = manager ? await manager.getRepository(MiRole).findBy({}) : await this.rolesCache.fetch(() => this.rolesRepository.findBy({}));
+		const assigns = manager
+			? (await manager.getRepository(MiRoleAssignment).findBy({ userId })).filter(assign => assign.expiresAt == null || assign.expiresAt.getTime() > Date.now())
+			: await this.getUserAssigns(userId);
 		const assignedRoles = roles.filter(r => assigns.map(x => x.roleId).includes(r.id));
-		const user = roles.some(r => r.target === 'conditional') ? await this.cacheService.findUserById(userId) : null;
+		const user = roles.some(r => r.target === 'conditional') ? (manager ? await manager.getRepository(MiUser).findOneByOrFail({ id: userId }) : await this.cacheService.findUserById(userId)) : null;
 		const matchedCondRoles = roles.filter(r => r.target === 'conditional' && this.evalCond(user!, assignedRoles, r.condFormula));
 		return [...assignedRoles, ...matchedCondRoles];
 	}
@@ -375,12 +376,12 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 	}
 
 	@bindThis
-	public async getUserPolicies(userId: MiUser['id'] | null): Promise<RolePolicies> {
+	public async getUserPolicies(userId: MiUser['id'] | null, manager?: EntityManager): Promise<RolePolicies> {
 		const basePolicies = { ...DEFAULT_POLICIES, ...this.meta.policies };
 
 		if (userId == null) return basePolicies;
 
-		const roles = await this.getUserRoles(userId);
+		const roles = await this.getUserRoles(userId, manager);
 
 		function calc<T extends keyof RolePolicies>(name: T, aggregate: (values: RolePolicies[T][]) => RolePolicies[T]) {
 			if (roles.length === 0) return aggregate([basePolicies[name]]);
@@ -463,9 +464,9 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 	}
 
 	@bindThis
-	public async isAdministrator(user: { id: MiUser['id'] } | null): Promise<boolean> {
+	public async isAdministrator(user: { id: MiUser['id'] } | null, manager?: EntityManager): Promise<boolean> {
 		if (user == null) return false;
-		return (this.meta.rootUserId === user.id) || (await this.getUserRoles(user.id)).some(r => r.isAdministrator);
+		return (this.meta.rootUserId === user.id) || (await this.getUserRoles(user.id, manager)).some(r => r.isAdministrator);
 	}
 
 	@bindThis
@@ -667,7 +668,7 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 	public async create(values: Partial<MiRole>, moderator?: MiUser): Promise<MiRole> {
 		const date = new Date();
 		const created = await this.rolesRepository.insertOne({
-			id: this.idService.gen(date.getTime()),
+			id: values.id ?? this.idService.gen(date.getTime()),
 			updatedAt: date,
 			lastUsedAt: date,
 			name: values.name,

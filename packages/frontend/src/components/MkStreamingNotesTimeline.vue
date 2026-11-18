@@ -19,35 +19,29 @@ SPDX-License-Identifier: AGPL-3.0-only
 			<div :class="$style.newBg2"></div>
 			<button class="_button" :class="$style.newButton" @click="releaseQueue()"><i class="ti ti-circle-arrow-up"></i> {{ i18n.ts.newNote }}</button>
 		</div>
-		<component
-			:is="prefer.s.animation ? TransitionGroup : 'div'"
+		<TransitionGroup
 			:class="$style.notes"
-			:enterActiveClass="$style.transition_x_enterActive"
-			:leaveActiveClass="$style.transition_x_leaveActive"
-			:enterFromClass="$style.transition_x_enterFrom"
-			:leaveToClass="$style.transition_x_leaveTo"
-			:moveClass="$style.transition_x_move"
+			:css="false"
+			:moveClass="motionEnabled ? $style.transition_x_move : $style.noMove"
 			tag="div"
+			@enter="enterRow"
+			@enterCancelled="cancelRowMotion"
+			@leave="leaveRow"
+			@leaveCancelled="cancelRowMotion"
 		>
-			<template v-for="(note, i) in paginator.items.value" :key="note.id">
-				<div v-if="i > 0 && isSeparatorNeeded(paginator.items.value[i -1].createdAt, note.createdAt)" :data-scroll-anchor="note.id">
-					<div :class="$style.date">
+			<MkVirtualTimelineItem v-for="(note, i) in paginator.items.value" :key="note.id" data-timeline-row :data-scroll-anchor="note.id">
+					<div v-if="i > 0 && isSeparatorNeeded(paginator.items.value[i -1].createdAt, note.createdAt)" :class="$style.date">
 						<span><i class="ti ti-chevron-up"></i> {{ getSeparatorInfo(paginator.items.value[i -1].createdAt, note.createdAt)?.prevText }}</span>
 						<span style="height: 1em; width: 1px; background: var(--MI_THEME-divider);"></span>
 						<span>{{ getSeparatorInfo(paginator.items.value[i -1].createdAt, note.createdAt)?.nextText }} <i class="ti ti-chevron-down"></i></span>
 					</div>
 					<MkNote :class="$style.note" :note="note" :withHardMute="true"/>
-				</div>
-				<div v-else-if="note._shouldInsertAd_" :data-scroll-anchor="note.id">
-					<MkNote :class="$style.note" :note="note" :withHardMute="true"/>
-					<div :class="$style.ad">
+					<div v-if="note._shouldInsertAd_" :class="$style.ad">
 						<MkAd :preferForms="['horizontal', 'horizontal-big']"/>
 					</div>
-				</div>
-				<MkNote v-else :class="$style.note" :note="note" :withHardMute="true" :data-scroll-anchor="note.id"/>
-			</template>
-		</component>
-		<button v-show="paginator.canFetchOlder.value" key="_more_" v-appear="prefer.s.enableInfiniteScroll ? paginator.fetchOlder : null" :disabled="paginator.fetchingOlder.value" class="_button" :class="$style.more" @click="paginator.fetchOlder">
+			</MkVirtualTimelineItem>
+		</TransitionGroup>
+		<button v-show="paginator.canFetchOlder.value" key="_more_" v-appear="prefer.s.enableInfiniteScroll ? fetchOlderAutomatically : null" :disabled="paginator.fetchingOlder.value" class="_button" :class="$style.more" @click="fetchOlder">
 			<div v-if="!paginator.fetchingOlder.value">{{ i18n.ts.loadMore }}</div>
 			<MkLoading v-else :inline="true"/>
 		</button>
@@ -56,7 +50,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { computed, watch, onUnmounted, provide, useTemplateRef, TransitionGroup, onMounted, shallowRef, ref, markRaw } from 'vue';
+import { computed, watch, onUnmounted, provide, useTemplateRef, TransitionGroup, onMounted, ref, markRaw, nextTick } from 'vue';
 import * as Misskey from 'misskey-js';
 import { useInterval } from '@@/js/use-interval.js';
 import { useDocumentVisibility } from '@@/js/use-document-visibility.js';
@@ -72,30 +66,36 @@ import { instance } from '@/instance.js';
 import { prefer } from '@/preferences.js';
 import { store } from '@/store.js';
 import MkNote from '@/components/MkNote.vue';
-import MkButton from '@/components/MkButton.vue';
 import { i18n } from '@/i18n.js';
 import { DI } from '@/di.js';
-import { globalEvents, useGlobalEvent } from '@/events.js';
+import { useGlobalEvent } from '@/events.js';
 import { isSeparatorNeeded, getSeparatorInfo } from '@/utility/timeline-date-separate.js';
 import { Paginator } from '@/utility/paginator.js';
+import MkVirtualTimelineItem from '@/components/MkVirtualTimelineItem.vue';
+import { TimelineViewport, timelineViewportKey } from '@/utility/timeline-viewport.js';
+import { captureTimelineAnchor, isTimelineAtTop, restoreTimelineAnchor, retainTimelineWindow, TIMELINE_WINDOW_SIZE } from '@/utility/timeline-window.js';
+import type { TimelineAnchor } from '@/utility/timeline-window.js';
 
 const props = withDefaults(defineProps<{
-	src: BasicTimelineType | 'mentions' | 'directs' | 'list' | 'antenna' | 'channel' | 'role';
+	src: BasicTimelineType | 'mentions' | 'directs' | 'list' | 'antenna' | 'channel' | 'role' | 'topic';
 	list?: string;
 	antenna?: string;
 	channel?: string;
 	role?: string;
+	topic?: string;
 	sound?: boolean;
 	customSound?: SoundStore | null;
 	withRenotes?: boolean;
 	withReplies?: boolean;
 	withSensitive?: boolean;
 	onlyFiles?: boolean;
+	forceRealtime?: boolean;
 }>(), {
 	withRenotes: true,
 	withReplies: false,
 	withSensitive: true,
 	onlyFiles: false,
+	forceRealtime: false,
 	sound: false,
 	customSound: null,
 });
@@ -103,6 +103,12 @@ const props = withDefaults(defineProps<{
 provide('inTimeline', true);
 provide('tl_withSensitive', computed(() => props.withSensitive));
 provide(DI.inChannel, computed(() => props.src === 'channel' ? props.channel ?? null : null));
+
+// Share one pair of observers across every note in this timeline. MkNote and
+// its media subscriptions are unmounted outside the viewport while the wrapper
+// keeps their measured height, so scrolling does not retain an unbounded DOM.
+const timelineViewport = new TimelineViewport();
+provide(timelineViewportKey, timelineViewport);
 
 let paginator: IPaginator<Misskey.entities.Note>;
 
@@ -181,29 +187,69 @@ if (props.src === 'antenna') {
 		})),
 		useShallowRef: true,
 	}));
+} else if (props.src === 'topic') {
+	paginator = markRaw(new Paginator('notes/topic-timeline', {
+		computedParams: computed(() => ({
+			topicId: props.topic!,
+			withRenotes: props.withRenotes,
+			withFiles: props.onlyFiles ? true : undefined,
+		})),
+		useShallowRef: true,
+	}));
 } else {
 	throw new Error('Unrecognized timeline type: ' + props.src);
 }
 
-onMounted(() => {
-	paginator.init();
+const realtimeEnabled = props.forceRealtime || store.s.realtimeMode || props.src === 'topic';
+const shouldBufferStreamNotes = props.forceRealtime || props.src === 'topic';
+const pendingStreamNotes: Misskey.entities.Note[] = [];
+let streamInitialised = false;
+let streamWasDisconnected = false;
 
-	if (paginator.computedParams) {
-		watch(paginator.computedParams, () => {
-			paginator.reload();
-		}, { immediate: false, deep: true });
+const suppressMotion = ref(false);
+const motionEnabled = computed(() => prefer.r.animation.value && !suppressMotion.value);
+const trueDeletions = new Set<string>();
+const rowMotions = new Map<Element, () => void>();
+let pauseAutomaticOlder = false;
+let mounted = false;
+
+function flushPendingStreamNotes() {
+	for (const note of pendingStreamNotes.toReversed()) {
+		paginator.prepend(note);
 	}
+	pendingStreamNotes.length = 0;
+}
+
+if (shouldBufferStreamNotes) {
+	watch(paginator.fetching, (fetching) => {
+		if (!fetching) flushPendingStreamNotes();
+	});
+}
+
+onMounted(async () => {
+	mounted = true;
+	await paginator.init();
+	if (!mounted) return;
+	streamInitialised = true;
+	if (shouldBufferStreamNotes) flushPendingStreamNotes();
 });
 
-function isTop() {
-	if (scrollContainer == null) return true;
-	if (rootEl.value == null) return true;
-	const scrollTop = scrollContainer.scrollTop;
-	const tlTop = rootEl.value.offsetTop - scrollContainer.offsetTop;
-	return scrollTop <= tlTop;
+// Register effects during setup so Vue owns and stops them on unmount.
+if (paginator.computedParams) {
+	watch(paginator.computedParams, () => {
+		if (mounted) void reloadTimeline();
+	}, { deep: true });
+}
+watch(paginator.items, () => {
+	if (motionEnabled.value) timelineViewport.pinRendered();
+}, { flush: 'pre' });
+
+function isTop(): boolean {
+	return isTimelineAtTop(rootEl.value, scrollContainer);
 }
 
 let scrollContainer: HTMLElement | null = null;
+let scrollTarget: HTMLElement | Window | null = null;
 
 function onScrollContainerScroll() {
 	if (isTop()) {
@@ -211,19 +257,32 @@ function onScrollContainerScroll() {
 	}
 }
 
+function onScrollIntent(event: Event): void {
+	if (event instanceof KeyboardEvent && !['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End', ' '].includes(event.key)) return;
+	pauseAutomaticOlder = false;
+}
+
+function detachScrollTarget(): void {
+	scrollTarget?.removeEventListener('scroll', onScrollContainerScroll);
+	for (const event of ['wheel', 'touchmove', 'pointerdown', 'keydown']) scrollTarget?.removeEventListener(event, onScrollIntent);
+}
+
 const rootEl = useTemplateRef('rootEl');
-watch(rootEl, (el) => {
-	if (el && scrollContainer == null) {
-		scrollContainer = getScrollContainer(el);
-		if (scrollContainer == null) return;
-		scrollContainer.addEventListener('scroll', onScrollContainerScroll, { passive: true }); // ほんとはscrollendにしたいけどiosが非対応
-	}
-}, { immediate: true });
+watch(rootEl, el => {
+	detachScrollTarget();
+	scrollContainer = el ? getScrollContainer(el) : null;
+	scrollTarget = el ? scrollContainer ?? window : null;
+	scrollTarget?.addEventListener('scroll', onScrollContainerScroll, { passive: true });
+	for (const event of ['wheel', 'touchmove', 'pointerdown', 'keydown']) scrollTarget?.addEventListener(event, onScrollIntent, { passive: true });
+}, { flush: 'post' });
 
 onUnmounted(() => {
-	if (scrollContainer) {
-		scrollContainer.removeEventListener('scroll', onScrollContainerScroll);
-	}
+	detachScrollTarget();
+	paginator.invalidate();
+	for (const finish of rowMotions.values()) finish();
+	rowMotions.clear();
+	trueDeletions.clear();
+	timelineViewport.dispose();
 });
 
 const visibility = useDocumentVisibility();
@@ -249,11 +308,12 @@ const POLLING_INTERVAL =
 	prefer.s.pollingInterval === 3 ? MIN_POLLING_INTERVAL :
 	MIN_POLLING_INTERVAL;
 
-if (!store.s.realtimeMode) {
+if (!realtimeEnabled) {
 	// TODO: 先頭のノートの作成日時が1日以上前であれば流速が遅いTLと見做してインターバルを通常より延ばす
 	useInterval(async () => {
 		paginator.fetchNewer({
 			toQueue: !isTop() || isPausingUpdate,
+			beforeCommit: items => items.slice(0, TIMELINE_WINDOW_SIZE).map(item => item.id),
 		});
 	}, POLLING_INTERVAL, {
 		immediate: false,
@@ -263,16 +323,19 @@ if (!store.s.realtimeMode) {
 	useGlobalEvent('notePosted', (note) => {
 		paginator.fetchNewer({
 			toQueue: !isTop() || isPausingUpdate,
+			beforeCommit: items => items.slice(0, TIMELINE_WINDOW_SIZE).map(item => item.id),
 		});
 	});
 }
 
 useGlobalEvent('noteDeleted', (noteId) => {
+	if (paginator.items.value.some(note => note.id === noteId)) trueDeletions.add(noteId);
 	paginator.removeItem(noteId);
 });
 
 useGlobalEvent('noteRemovedFromAntenna', (antennaId, noteId) => {
 	if (props.src === 'antenna' && props.antenna === antennaId) {
+		if (paginator.items.value.some(note => note.id === noteId)) trueDeletions.add(noteId);
 		paginator.removeItem(noteId);
 	}
 });
@@ -282,7 +345,97 @@ function releaseQueue() {
 	scrollToTop(rootEl.value!);
 }
 
+function cancelRowMotion(element: Element): void {
+	rowMotions.get(element)?.();
+}
+
+function animateRow(element: Element, frames: Keyframe[], duration: number, done: () => void): void {
+	cancelRowMotion(element);
+	const el = element as HTMLElement;
+	const release = timelineViewport.pin(el);
+	if (typeof el.animate !== 'function') {
+		release();
+		done();
+		return;
+	}
+	const animation = el.animate(frames, { duration, easing: duration === 700 ? 'cubic-bezier(0.23, 1, 0.32, 1)' : 'cubic-bezier(0, .5, .5, 1)' });
+	let finished = false;
+	const finish = (): void => {
+		if (finished) return;
+		finished = true;
+		window.clearTimeout(timer);
+		rowMotions.delete(element);
+		animation.cancel();
+		release();
+		done();
+	};
+	const timer = window.setTimeout(finish, duration + 100);
+	rowMotions.set(element, finish);
+	void animation.finished.then(finish, finish);
+}
+
+function enterRow(element: Element, done: () => void): void {
+	const el = element as HTMLElement;
+	if (!motionEnabled.value || !timelineViewport.isNear(el)) {
+		done();
+		return;
+	}
+	// Individual translate composes with TransitionGroup's transform-based FLIP.
+	animateRow(el, [{ opacity: 0, translate: '0 -64px' }, { opacity: 1, translate: '0 0' }], 700, done);
+}
+
+function leaveRow(element: Element, done: () => void): void {
+	const el = element as HTMLElement;
+	const deleted = trueDeletions.delete(el.dataset.scrollAnchor!);
+	if (!deleted || !motionEnabled.value || el.dataset.virtualized === 'true' || !timelineViewport.isNear(el)) {
+		done();
+		return;
+	}
+	// Vue has already disposed the note subscriptions; only its DOM fades out.
+	el.style.overflow = 'hidden';
+	animateRow(el, [{ opacity: 1, height: String(el.offsetHeight) + 'px' }, { opacity: 0, height: '0px' }], 200, done);
+}
+
+function fetchOlderAutomatically(): Promise<void> | undefined {
+	if (!pauseAutomaticOlder) return fetchOlder();
+	return undefined;
+}
+
+async function fetchOlder(): Promise<void> {
+	let anchor: TimelineAnchor | null = null;
+	let trimmed = false;
+	await paginator.fetchOlder({
+		beforeCommit: items => {
+			if (items.length <= TIMELINE_WINDOW_SIZE) return undefined;
+			suppressMotion.value = true;
+			trimmed = true;
+			for (const finish of rowMotions.values()) finish();
+			// End a pending FLIP before measuring the layout anchor.
+			for (const row of rootEl.value?.querySelectorAll<HTMLElement>('[data-timeline-row]') ?? []) {
+				for (const animation of row.getAnimations?.() ?? []) animation.cancel();
+			}
+			anchor = rootEl.value ? captureTimelineAnchor(rootEl.value, scrollContainer) : null;
+			const retained = retainTimelineWindow(items, anchor?.id, isTop());
+			pauseAutomaticOlder = retained[0]?.id === items[0]?.id;
+			return retained.map(item => item.id);
+		},
+	});
+	if (!trimmed) return;
+	await nextTick();
+	if (mounted && anchor && rootEl.value) restoreTimelineAnchor(rootEl.value, scrollContainer, anchor);
+	// Keep the same TransitionGroup instance; trimming is a silent layout commit.
+	suppressMotion.value = false;
+}
+
 function prepend(note: Misskey.entities.Note & MisskeyEntity) {
+	if (shouldBufferStreamNotes && paginator.fetching.value) {
+		if (!pendingStreamNotes.some(pending => pending.id === note.id)) {
+			pendingStreamNotes.unshift(note);
+			if (pendingStreamNotes.length > 100) pendingStreamNotes.pop();
+		}
+		return;
+	}
+
 	adInsertionCounter++;
 
 	if (instance.notesPerOneAd > 0 && adInsertionCounter % instance.notesPerOneAd === 0) {
@@ -304,7 +457,22 @@ function prepend(note: Misskey.entities.Note & MisskeyEntity) {
 	}
 }
 
-const stream = store.s.realtimeMode ? useStream() : null;
+const stream = realtimeEnabled ? useStream() : null;
+
+const onStreamConnected = () => {
+	if (shouldBufferStreamNotes && streamInitialised && streamWasDisconnected) {
+		streamWasDisconnected = false;
+		void reloadTimeline();
+	}
+};
+const onStreamDisconnected = () => {
+	if (shouldBufferStreamNotes) streamWasDisconnected = true;
+};
+
+if (shouldBufferStreamNotes) {
+	stream?.on('_connected_', onStreamConnected);
+	stream?.on('_disconnected_', onStreamDisconnected);
+}
 
 const connections = {
 	antenna: null as Misskey.IChannelConnection<Misskey.Channels['antenna']> | null,
@@ -316,6 +484,7 @@ const connections = {
 	userList: null as Misskey.IChannelConnection<Misskey.Channels['userList']> | null,
 	channel: null as Misskey.IChannelConnection<Misskey.Channels['channel']> | null,
 	roleTimeline: null as Misskey.IChannelConnection<Misskey.Channels['roleTimeline']> | null,
+	topicTimeline: null as Misskey.IChannelConnection<Misskey.Channels['topicTimeline']> | null,
 };
 
 function connectChannel() {
@@ -383,6 +552,14 @@ function connectChannel() {
 			roleId: props.role,
 		});
 		connections.roleTimeline.on('note', prepend);
+	} else if (props.src === 'topic') {
+		if (props.topic == null) return;
+		connections.topicTimeline = stream.useChannel('topicTimeline', {
+			topicId: props.topic,
+			withRenotes: props.withRenotes,
+			withFiles: props.onlyFiles ? true : undefined,
+		});
+		connections.topicTimeline.on('note', prepend);
 	}
 }
 
@@ -396,12 +573,12 @@ function disconnectChannel() {
 	}
 }
 
-if (store.s.realtimeMode) {
+if (realtimeEnabled) {
 	connectChannel();
 }
 
-watch(() => [props.list, props.antenna, props.channel, props.role, props.withRenotes], () => {
-	if (store.s.realtimeMode) {
+watch(() => [props.list, props.antenna, props.channel, props.role, props.topic, props.withRenotes], () => {
+	if (realtimeEnabled) {
 		disconnectChannel();
 		connectChannel();
 	}
@@ -409,10 +586,15 @@ watch(() => [props.list, props.antenna, props.channel, props.role, props.withRen
 watch(() => props.withSensitive, reloadTimeline);
 
 onUnmounted(() => {
+	mounted = false;
+	stream?.off('_connected_', onStreamConnected);
+	stream?.off('_disconnected_', onStreamDisconnected);
 	disconnectChannel();
 });
 
 function reloadTimeline() {
+	pauseAutomaticOlder = false;
+	trueDeletions.clear();
 	return new Promise<void>((res) => {
 		adInsertionCounter = 0;
 
@@ -432,34 +614,8 @@ defineExpose({
 	transition: transform 0.7s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
-.transition_x_enterActive {
-	transition: transform 0.7s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.7s cubic-bezier(0.23, 1, 0.32, 1);
-
-	&.note,
-	.note {
-		/* Skip Note Rendering有効時、TransitionGroupでnoteを追加するときに一瞬がくっとなる問題を抑制する */
-		content-visibility: visible !important;
-	}
-}
-
-.transition_x_leaveActive {
-	transition: height 0.2s cubic-bezier(0,.5,.5,1), opacity 0.2s cubic-bezier(0,.5,.5,1);
-}
-
-.transition_x_enterFrom {
-	opacity: 0;
-	transform: translateY(max(-64px, -100%));
-}
-
-@supports (interpolate-size: allow-keywords) {
-	.transition_x_leaveTo {
-		interpolate-size: allow-keywords; // heightのtransitionを動作させるために必要
-		height: 0;
-	}
-}
-
-.transition_x_leaveTo {
-	opacity: 0;
+.noMove {
+	transition: none;
 }
 
 .notes {

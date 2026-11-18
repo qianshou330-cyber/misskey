@@ -30,13 +30,14 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 <script lang="ts" setup>
 import * as Misskey from 'misskey-js';
-import { inject, watch, ref } from 'vue';
+import { inject, ref, watch } from 'vue';
 import { TransitionGroup } from 'vue';
 import { isSupportedEmoji } from '@@/js/emojilist.js';
+import { getEmojiNameFromReaction, isLocalCustomEmojiReaction } from '@@/js/emoji-name.js';
 import XReaction from '@/components/MkReactionsViewer.reaction.vue';
 import { $i } from '@/i.js';
 import { prefer } from '@/preferences.js';
-import { customEmojisMap } from '@/custom-emojis.js';
+import { customEmojis, customEmojisMap } from '@/custom-emojis.js';
 import { DI } from '@/di.js';
 
 const props = withDefaults(defineProps<{
@@ -76,43 +77,46 @@ function onMockToggleReaction(emoji: string, count: number) {
 function canReact(reaction: string) {
 	if (!$i) return false;
 	// TODO: CheckPermissions
-	return !reaction.match(/@\w/) && (customEmojisMap.has(reaction) || isSupportedEmoji(reaction));
+	return isLocalCustomEmojiReaction(reaction)
+		? customEmojisMap.has(getEmojiNameFromReaction(reaction))
+		: isSupportedEmoji(reaction);
 }
 
-watch([() => props.reactions, () => props.maxNumber], ([newSource, maxNumber]) => {
+watch([
+	() => props.reactions,
+	() => props.maxNumber,
+	() => props.myReaction,
+	customEmojis,
+	() => prefer.s.showAvailableReactionsFirstInNote,
+], ([newSource, maxNumber, myReaction, emojis, availableFirst], previous) => {
+	// Counts retain their established order; only changed availability needs a new top N.
+	const reorder = previous.length > 0 && (availableFirst !== previous[4] || (availableFirst && emojis !== previous[3]));
 	let newReactions: [string, number][] = [];
 	hasMoreReactions.value = Object.keys(newSource).length > maxNumber;
 
-	for (let i = 0; i < _reactions.value.length; i++) {
-		const reaction = _reactions.value[i][0];
-		if (reaction in newSource && newSource[reaction] !== 0) {
-			_reactions.value[i][1] = newSource[reaction];
-			newReactions.push(_reactions.value[i]);
+	if (!reorder) {
+		for (const [reaction] of _reactions.value) {
+			if (reaction in newSource && newSource[reaction] !== 0) {
+				newReactions.push([reaction, newSource[reaction]]);
+			}
 		}
 	}
 
-	const newReactionsNames = newReactions.map(([x]) => x);
-	newReactions = [
-		...newReactions,
-		...Object.entries(newSource)
-			.sort(([emojiA, countA], [emojiB, countB]) => {
-				if (prefer.s.showAvailableReactionsFirstInNote) {
-					if (!canReact(emojiA) && canReact(emojiB)) return 1;
-					if (canReact(emojiA) && !canReact(emojiB)) return -1;
-					return countB - countA;
-				} else {
-					return countB - countA;
-				}
-			})
-			.filter(([y], i) => i < maxNumber && !newReactionsNames.includes(y)),
-	];
-
-	newReactions = newReactions.slice(0, props.maxNumber);
-
-	if (props.myReaction && !newReactions.map(([x]) => x).includes(props.myReaction)) {
-		newReactions.push([props.myReaction, newSource[props.myReaction]]);
+	const sorted = Object.entries(newSource);
+	if (availableFirst) {
+		const available = new Map(sorted.map(([emoji]) => [emoji, canReact(emoji)]));
+		sorted.sort(([emojiA, countA], [emojiB, countB]) => {
+			if (available.get(emojiA) !== available.get(emojiB)) return available.get(emojiA) ? -1 : 1;
+			return countB - countA;
+		});
+	} else {
+		sorted.sort(([, countA], [, countB]) => countB - countA);
 	}
-
+	const names = new Set(newReactions.map(([emoji]) => emoji));
+	newReactions = [...newReactions, ...sorted.filter(([emoji], index) => index < maxNumber && !names.has(emoji))].slice(0, maxNumber);
+	if (myReaction && !newReactions.some(([emoji]) => emoji === myReaction)) {
+		newReactions.push([myReaction, newSource[myReaction]]);
+	}
 	_reactions.value = newReactions;
 }, { immediate: true, deep: true });
 </script>

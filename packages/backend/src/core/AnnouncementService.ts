@@ -15,6 +15,8 @@ import { AnnouncementEntityService } from '@/core/entities/AnnouncementEntitySer
 import { GlobalEventService } from '@/core/GlobalEventService.js';
 import { ModerationLogService } from '@/core/ModerationLogService.js';
 
+export class InvalidMarqueeAnnouncementError extends Error {}
+
 @Injectable()
 export class AnnouncementService {
 	constructor(
@@ -50,6 +52,7 @@ export class AnnouncementService {
 		const q = this.announcementsRepository.createQueryBuilder('announcement')
 			.where('announcement.isActive = true')
 			.andWhere('announcement.silence = false')
+			.andWhere('announcement.display != :marqueeDisplay', { marqueeDisplay: 'marquee' })
 			.andWhere(new Brackets(qb => {
 				qb.orWhere('announcement.userId = :userId', { userId: user.id });
 				qb.orWhere('announcement.userId IS NULL');
@@ -67,6 +70,10 @@ export class AnnouncementService {
 
 	@bindThis
 	public async create(values: Partial<MiAnnouncement>, moderator?: MiUser): Promise<{ raw: MiAnnouncement; packed: Packed<'Announcement'> }> {
+		if (values.display === 'marquee' && values.userId != null) {
+			throw new InvalidMarqueeAnnouncementError('Marquee announcements must be global.');
+		}
+		const isMarquee = values.display === 'marquee';
 		const announcement = await this.announcementsRepository.insertOne({
 			id: this.idService.gen(),
 			updatedAt: null,
@@ -75,9 +82,9 @@ export class AnnouncementService {
 			imageUrl: values.imageUrl || null,
 			icon: values.icon,
 			display: values.display,
-			forExistingUsers: values.forExistingUsers,
-			silence: values.silence,
-			needConfirmationToRead: values.needConfirmationToRead,
+			forExistingUsers: isMarquee ? false : values.forExistingUsers,
+			silence: isMarquee ? true : values.silence,
+			needConfirmationToRead: isMarquee ? false : values.needConfirmationToRead,
 			userId: values.userId,
 		});
 
@@ -99,9 +106,12 @@ export class AnnouncementService {
 				});
 			}
 		} else {
-			this.globalEventService.publishBroadcastStream('announcementCreated', {
-				announcement: packed,
-			});
+			// The homepage reads marquees separately; do not notify older clients either.
+			if (!isMarquee) {
+				this.globalEventService.publishBroadcastStream('announcementCreated', {
+					announcement: packed,
+				});
+			}
 
 			if (moderator) {
 				this.moderationLogService.log(moderator, 'createGlobalAnnouncement', {
@@ -119,17 +129,22 @@ export class AnnouncementService {
 
 	@bindThis
 	public async update(announcement: MiAnnouncement, values: Partial<MiAnnouncement>, moderator?: MiUser): Promise<void> {
+		const isMarquee = (values.display ?? announcement.display) === 'marquee';
+		// Updating the display must never turn an existing personal announcement public.
+		if (isMarquee && announcement.userId != null) {
+			throw new InvalidMarqueeAnnouncementError('Marquee announcements must be global.');
+		}
 		await this.announcementsRepository.update(announcement.id, {
 			updatedAt: new Date(),
 			title: values.title,
 			text: values.text,
 			/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- 空の文字列の場合、nullを渡すようにするため */
-			imageUrl: values.imageUrl || null,
+			imageUrl: values.imageUrl === undefined ? undefined : values.imageUrl || null,
 			display: values.display,
 			icon: values.icon,
-			forExistingUsers: values.forExistingUsers,
-			silence: values.silence,
-			needConfirmationToRead: values.needConfirmationToRead,
+			forExistingUsers: isMarquee ? false : values.forExistingUsers,
+			silence: isMarquee ? true : values.silence,
+			needConfirmationToRead: isMarquee ? false : values.needConfirmationToRead,
 			isActive: values.isActive,
 		});
 

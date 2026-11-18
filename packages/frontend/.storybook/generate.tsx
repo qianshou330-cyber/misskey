@@ -458,9 +458,10 @@ function toStories(component: string): Promise<string> {
 		globSync('src/components/MkSignupServerRules.vue'),
 		globSync('src/components/MkUserSetupDialog.vue'),
 		globSync('src/components/MkUserSetupDialog.*.vue'),
-		globSync('src/components/MkImgPreviewDialog.vue'),
 		globSync('src/components/MkInstanceCardMini.vue'),
 		globSync('src/components/MkInviteCode.vue'),
+		globSync('src/components/MkMusicChartCard.vue'),
+		globSync('src/components/MkMusicChartTrend.vue'),
 		globSync('src/components/MkTagItem.vue'),
 		globSync('src/components/MkRoleSelectDialog.vue'),
 		globSync('src/components/grid/MkGrid.vue'),
@@ -468,6 +469,13 @@ function toStories(component: string): Promise<string> {
 		globSync('src/pages/admin/overview.ap-requests.vue'),
 		globSync('src/pages/user/home.vue'),
 		globSync('src/pages/search.vue'),
+		globSync('src/pages/chat/XAttachment.vue'),
+		globSync('src/pages/chat/XMessage.vue'),
+		globSync('src/pages/chat/XAttachmentComposer.vue'),
+		globSync('src/pages/chat/XVoiceMessage.vue'),
+		globSync('src/pages/chat/XVoiceRecorder.vue'),
+		globSync('src/pages/chat/private.vue'),
+		globSync('src/pages/chat/contacts.vue'),
 	].flat();
 	await Promise.all(components.map(async (component) => {
 		const stories = component.replace(/\.vue$/, '.stories.ts');

@@ -16,7 +16,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 			:key="emoji"
 			:data-emoji="emoji"
 			class="_button item"
-			:disabled="disabledEmojis?.value.includes(emoji)"
+			:disabled="disabledEmojiNames.includes(emoji)"
 			@pointerenter="computeButtonTitle"
 			@click="emit('chosen', emoji, $event)"
 		>
@@ -36,6 +36,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 			:key="`custom:${child.value}`"
 			:initialShown="initialShown"
 			:emojis="computed(() => customEmojis.filter(e => e.category === child.category).map(e => `:${e.name}:`))"
+			:disabledEmojis="disabledEmojis"
 			:hasChildSection="child.children.length !== 0"
 			:customEmojiTree="child.children"
 			@chosen="nestedChosen"
@@ -49,7 +50,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 			:key="emoji"
 			:data-emoji="emoji"
 			class="_button item"
-			:disabled="disabledEmojis?.value.includes(emoji)"
+			:disabled="disabledEmojiNames.includes(emoji)"
 			@pointerenter="computeButtonTitle"
 			@click="emit('chosen', emoji, $event)"
 		>
@@ -71,7 +72,7 @@ import MkEmojiPickerSection from '@/components/MkEmojiPicker.section.vue';
 
 const props = defineProps<{
 	emojis: string[] | Ref<string[]>;
-	disabledEmojis?: Ref<string[]>;
+	disabledEmojis?: string[] | Ref<string[]>;
 	initialShown?: boolean;
 	hasChildSection?: boolean;
 	customEmojiTree?: CustomEmojiFolderTree[];
@@ -82,6 +83,8 @@ const emit = defineEmits<{
 }>();
 
 const emojis = computed(() => Array.isArray(props.emojis) ? props.emojis : props.emojis.value);
+
+const disabledEmojiNames = computed(() => Array.isArray(props.disabledEmojis) ? props.disabledEmojis : (props.disabledEmojis?.value ?? []));
 
 const shown = ref(!!props.initialShown);
 

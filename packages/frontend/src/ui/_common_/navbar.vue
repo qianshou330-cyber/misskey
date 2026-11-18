@@ -8,7 +8,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 	<div :class="$style.body">
 		<div :class="$style.top">
 			<button v-tooltip.noDelay.right="instance.name ?? i18n.ts.instance" class="_button" :class="$style.instance" @click="openInstanceMenu">
-				<img :src="instance.iconUrl || '/favicon.ico'" alt="" :class="$style.instanceIcon" style="view-transition-name: navbar-serverIcon;"/>
+				<img :src="instance.iconUrl || puboLogo" alt="PUBO" :class="$style.instanceIcon" style="view-transition-name: navbar-serverIcon;"/>
 			</button>
 			<button v-if="!iconOnly" v-tooltip.noDelay.right="i18n.ts.realtimeMode" class="_button" :class="[$style.realtimeMode, store.r.realtimeMode.value ? $style.on : null]" @click="toggleRealtimeMode">
 				<i v-if="store.r.realtimeMode.value" class="ti ti-bolt ti-fw"></i>
@@ -61,7 +61,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 				<i v-if="store.r.realtimeMode.value" class="ti ti-bolt ti-fw"></i>
 				<i v-else class="ti ti-bolt-off ti-fw"></i>
 			</button>
-			<button v-tooltip.noDelay.right="i18n.ts.note" class="_button" :class="[$style.post]" data-cy-open-post-form @click="() => { os.post(); }">
+			<button v-tooltip.noDelay.right="i18n.ts.note" class="_button" :class="[$style.post]" data-testid="open-post-form" @click="() => { os.post(); }">
 				<i class="ti ti-pencil ti-fw" :class="$style.postIcon"></i><span :class="$style.postText">{{ i18n.ts.note }}</span>
 			</button>
 			<button v-if="$i != null" v-tooltip.noDelay.right="`${i18n.ts.account}: @${$i.username}`" class="_button" :class="[$style.account]" @click="openAccountMenu">
@@ -116,6 +116,7 @@ import { useRouter } from '@/router.js';
 import { prefer } from '@/preferences.js';
 import { getAccountMenu } from '@/accounts.js';
 import { $i } from '@/i.js';
+import puboLogo from '/client-assets/pubo-logo.png';
 
 const router = useRouter();
 
@@ -199,6 +200,14 @@ function menuEdit() {
 </script>
 
 <style lang="scss" module>
+.post {
+	// PUBO posting buttons keep the requested white/black colors in every theme.
+	--MI_THEME-accent: #d9d9d9;
+	--MI_THEME-fgOnAccent: #000;
+	--MI_THEME-buttonGradateA: #fff;
+	--MI_THEME-buttonGradateB: #fff;
+}
+
 .root {
 	--nav-width: 250px;
 	--nav-icon-only-width: 80px;
@@ -424,9 +433,9 @@ function menuEdit() {
 
 	.instanceIcon {
 		display: inline-block;
-		width: 38px;
-		aspect-ratio: 1;
-		border-radius: 8px;
+		width: 64px;
+		height: 36px;
+		object-fit: contain;
 	}
 
 	.realtimeMode {
@@ -655,9 +664,9 @@ function menuEdit() {
 
 	.instanceIcon {
 		display: inline-block;
-		width: 30px;
-		aspect-ratio: 1;
-		border-radius: 8px;
+		width: 42px;
+		height: 28px;
+		object-fit: contain;
 	}
 
 	.bottom {

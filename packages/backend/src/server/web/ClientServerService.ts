@@ -147,10 +147,10 @@ export class ClientServerService {
 		let manifest = {
 			// 空文字列の場合右辺を使いたいため
 			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-			'short_name': this.meta.shortName || this.meta.name || this.config.host,
+			'short_name': this.meta.shortName || this.meta.name || 'PUBO',
 			// 空文字列の場合右辺を使いたいため
 			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-			'name': this.meta.name || this.config.host,
+			'name': this.meta.name || 'PUBO',
 			'start_url': '/',
 			'display': 'standalone',
 			'background_color': '#313a42',
@@ -160,19 +160,19 @@ export class ClientServerService {
 			'icons': [{
 				// 空文字列の場合右辺を使いたいため
 				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-				'src': this.meta.app192IconUrl || '/static-assets/icons/192.png',
+				'src': this.meta.app192IconUrl || '/static-assets/icons/192.png?brand=pubo',
 				'sizes': '192x192',
 				'type': 'image/png',
 				'purpose': 'maskable',
 			}, {
 				// 空文字列の場合右辺を使いたいため
 				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-				'src': this.meta.app512IconUrl || '/static-assets/icons/512.png',
+				'src': this.meta.app512IconUrl || '/static-assets/icons/512.png?brand=pubo',
 				'sizes': '512x512',
 				'type': 'image/png',
 				'purpose': 'maskable',
 			}, {
-				'src': '/static-assets/splash.png',
+				'src': '/static-assets/splash.png?brand=pubo',
 				'sizes': '300x300',
 				'type': 'image/png',
 				'purpose': 'any',
@@ -419,13 +419,13 @@ export class ClientServerService {
 
 		// OpenSearch XML
 		fastify.get('/opensearch.xml', async (request, reply) => {
-			const name = this.meta.name ?? 'Misskey';
+			const name = this.meta.name ?? 'PUBO';
 			let content = '';
 			content += '<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/" xmlns:moz="http://www.mozilla.org/2006/browser/search/">';
 			content += `<ShortName>${name}</ShortName>`;
 			content += `<Description>${name} Search</Description>`;
 			content += '<InputEncoding>UTF-8</InputEncoding>';
-			content += `<Image width="16" height="16" type="image/x-icon">${this.config.url}/favicon.ico</Image>`;
+			content += `<Image width="16" height="16" type="image/x-icon">${this.config.url}/favicon.ico?brand=pubo</Image>`;
 			content += `<Url type="text/html" template="${this.config.url}/search?q={searchTerms}"/>`;
 			content += '</OpenSearchDescription>';
 
@@ -439,7 +439,7 @@ export class ClientServerService {
 			reply.header('Cache-Control', 'public, max-age=30');
 			return await HtmlTemplateService.replyHtml(reply, BasePage({
 				img: this.meta.bannerUrl ?? undefined,
-				title: this.meta.name ?? 'Misskey',
+				title: this.meta.name ?? 'PUBO',
 				desc: this.meta.description ?? undefined,
 				...(await this.htmlTemplateService.getCommonData()),
 				...data,
@@ -806,7 +806,7 @@ export class ClientServerService {
 
 			reply.header('Cache-Control', 'public, max-age=3600');
 			return await HtmlTemplateService.replyHtml(reply, BaseEmbed({
-				title: this.meta.name ?? 'Misskey',
+				title: this.meta.name ?? 'PUBO',
 				...(await this.htmlTemplateService.getCommonData()),
 				embedCtxJson: htmlSafeJsonStringify({
 					user: _user,
@@ -836,7 +836,7 @@ export class ClientServerService {
 
 			reply.header('Cache-Control', 'public, max-age=3600');
 			return await HtmlTemplateService.replyHtml(reply, BaseEmbed({
-				title: this.meta.name ?? 'Misskey',
+				title: this.meta.name ?? 'PUBO',
 				...(await this.htmlTemplateService.getCommonData()),
 				embedCtxJson: htmlSafeJsonStringify({
 					note: _note,
@@ -857,7 +857,7 @@ export class ClientServerService {
 
 			reply.header('Cache-Control', 'public, max-age=3600');
 			return await HtmlTemplateService.replyHtml(reply, BaseEmbed({
-				title: this.meta.name ?? 'Misskey',
+				title: this.meta.name ?? 'PUBO',
 				...(await this.htmlTemplateService.getCommonData()),
 				embedCtxJson: htmlSafeJsonStringify({
 					clip: _clip,
@@ -870,7 +870,7 @@ export class ClientServerService {
 
 			reply.header('Cache-Control', 'public, max-age=3600');
 			return await HtmlTemplateService.replyHtml(reply, BaseEmbed({
-				title: this.meta.name ?? 'Misskey',
+				title: this.meta.name ?? 'PUBO',
 				...(await this.htmlTemplateService.getCommonData()),
 			}));
 		});

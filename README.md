@@ -1,3 +1,7 @@
+# PUBO 定制源码交接快照
+
+请先阅读 [跨账号 / 智能体交接](docs/AGENT_HANDOFF.md)、[IPA 构建与下载](docs/IPA_BUILD.md)、[修复记录](docs/FIX_LOG.md)。本分支为已公开历史源码快照，不是现网实时导出；原上游说明如下。
+
 <div align="center">
 <a href="https://misskey-hub.net">
 	<img src="./assets/title_float.svg" alt="Misskey logo" style="border-radius:50%" width="300"/>

@@ -8,7 +8,7 @@ export function Splash(props: {
 }) {
 	return (
 		<div id="splash">
-			<img id="splashIcon" src={props.icon || '/static-assets/splash.png'} />
+			<img id="splashIcon" src={props.icon || '/static-assets/pubo-white-660-v1.webp'} width={props.icon ? undefined : 660} height={props.icon ? undefined : 221} />
 			<div id="splashSpinner">
 				<svg class="spinner bg" viewBox="0 0 152 152" xmlns="http://www.w3.org/2000/svg">
 					<g transform="matrix(1,0,0,1,12,12)">

@@ -33,7 +33,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 	:duration="transitionDuration" appear @afterLeave="onClosed" @enter="emit('opening')" @afterEnter="onOpened"
 >
 	<div v-show="manualShowing != null ? manualShowing : showing" ref="modalRootEl" v-hotkey.global="keymap" :class="[$style.root, { [$style.drawer]: type === 'drawer', [$style.dialog]: type === 'dialog', [$style.popup]: type === 'popup' }]" :style="{ zIndex, pointerEvents: (manualShowing != null ? manualShowing : showing) ? 'auto' : 'none', '--transformOrigin': transformOrigin }">
-		<div data-cy-bg :data-cy-transparent="isEnableBgTransparent" class="_modalBg" :class="[$style.bg, { [$style.bgTransparent]: isEnableBgTransparent }]" :style="{ zIndex }" @click="onBgClick" @mousedown="onBgClick" @contextmenu.prevent.stop="() => {}"></div>
+		<div data-testid="bg" :data-test-is-transparent="isEnableBgTransparent" class="_modalBg" :class="[$style.bg, { [$style.bgTransparent]: isEnableBgTransparent }]" :style="{ zIndex }" @click="onBgClick" @mousedown="onBgClick" @contextmenu.prevent.stop="() => {}"></div>
 		<div ref="content" :class="[$style.content, { [$style.fixed]: fixed }]" :style="{ zIndex }" @click.self="onBgClick">
 			<slot :max-height="maxHeight" :type="type"></slot>
 		</div>
@@ -42,7 +42,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { nextTick, normalizeClass, onMounted, onUnmounted, provide, watch, ref, useTemplateRef, computed } from 'vue';
+import { nextTick, normalizeClass, onBeforeUnmount, onMounted, onUnmounted, provide, watch, ref, useTemplateRef, computed } from 'vue';
 import type { Keymap } from '@/utility/hotkey.js';
 import * as os from '@/os.js';
 import { isTouchUsing } from '@/utility/touch.js';
@@ -74,6 +74,7 @@ const props = withDefaults(defineProps<{
 	transparentBg?: boolean;
 	hasInteractionWithOtherFocusTrappedEls?: boolean;
 	returnFocusTo?: HTMLElement | null;
+	disableAnimation?: boolean;
 }>(), {
 	manualShowing: null,
 	anchorElement: null,
@@ -84,6 +85,7 @@ const props = withDefaults(defineProps<{
 	transparentBg: false,
 	hasInteractionWithOtherFocusTrappedEls: false,
 	returnFocusTo: null,
+	disableAnimation: false,
 });
 
 const emit = defineEmits<{
@@ -118,7 +120,7 @@ const type = computed<ModalTypes>(() => {
 });
 const isEnableBgTransparent = computed(() => props.transparentBg && (type.value === 'popup'));
 const transitionName = computed((() =>
-	prefer.s.animation
+	prefer.s.animation && !props.disableAnimation
 		? useSendAnime.value
 			? 'send'
 			: type.value === 'drawer'
@@ -337,13 +339,20 @@ onMounted(() => {
 			}
 		} else {
 			releaseFocusTrap?.();
+			releaseFocusTrap = null;
 			focusParent(props.returnFocusTo ?? props.anchorElement, true, false);
 		}
 	}, { immediate: true });
 
 	nextTick(() => {
-		alignObserver.observe(content.value!);
+		if (content.value) alignObserver.observe(content.value);
 	});
+});
+
+onBeforeUnmount(() => {
+	// The trap needs its DOM parent chain to restore siblings' inert state.
+	releaseFocusTrap?.();
+	releaseFocusTrap = null;
 });
 
 onUnmounted(() => {

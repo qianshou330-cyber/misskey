@@ -6,13 +6,52 @@
 process.env.NODE_ENV = 'test';
 
 import * as assert from 'assert';
-import { describe, beforeAll, test, expect } from 'vitest';
+import { describe, beforeAll, test, expect, vi } from 'vitest';
 // node-fetch only supports it's own Blob yet
 // https://github.com/node-fetch/node-fetch/pull/1664
 import { Blob } from 'node-fetch';
 import { api, castAsError, initTestDb, post, role, signup, simpleGet, uploadFile } from '../utils.js';
 import type * as misskey from 'misskey-js';
 import { MiUser } from '@/models/_.js';
+
+const waitForPushToTlOptions = { timeout: 3000, interval: 25 };
+
+describe('Snake game session endpoint', () => {
+	test('rejects guests and keeps the unconfigured game unavailable', async () => {
+		const guest = await api('games/snake/session', {});
+		expect(guest.status).toBe(401);
+		expect(castAsError(guest.body).error.code).toBe('CREDENTIAL_REQUIRED');
+		const account = await signup({ username: 'snake_endpoint_test' });
+		const disabled = await api('games/snake/session', {}, account);
+		expect(disabled.status).toBe(400);
+		expect(castAsError(disabled.body).error.code).toBe('SNAKE_GAME_UNAVAILABLE');
+		const metadata = await api('meta', { detail: false });
+		expect(metadata.body.snakeGameEnabled).toBe(false);
+	});
+});
+
+describe('Music chart public endpoints', () => {
+	test('anonymous users can read summaries and bounded history', async () => {
+		const summary = await api('music-charts/summary', {});
+		expect(summary.status).toBe(200);
+		expect(summary.body.charts.map(chart => chart.key)).toEqual(['melon-daily', 'melon-hot100', 'melon-top100', 'genie-realtime', 'bugs-realtime']);
+		const history = await api('music-charts/history', { chartKey: 'bugs-realtime' });
+		expect(history.status).toBe(200);
+		expect(history.body.points).toHaveLength(169);
+		expect(history.body.points.every(point => point.result === 'missing' && point.rank === null)).toBe(true);
+	});
+
+	test('rejects unregistered chart keys and missing parameters', async () => {
+		// @ts-expect-error Deliberately exercise runtime enum validation.
+		const unknown = await api('music-charts/history', { chartKey: 'https://example.com' });
+		expect(unknown.status).toBe(400);
+		expect(castAsError(unknown.body).error.code).toBe('INVALID_PARAM');
+		// @ts-expect-error Deliberately exercise runtime required-field validation.
+		const missing = await api('music-charts/history', {});
+		expect(missing.status).toBe(400);
+		expect(castAsError(missing.body).error.code).toBe('INVALID_PARAM');
+	});
+});
 
 describe('Endpoints', () => {
 	let alice: misskey.entities.SignupResponse;
@@ -1149,12 +1188,14 @@ describe('Endpoints', () => {
 				visibility: 'followers',
 			});
 
-			const res = await api('notes/timeline', {}, dave);
+			await vi.waitFor(async () => {
+				const res = await api('notes/timeline', {}, dave);
 
-			assert.strictEqual(res.status, 200);
-			assert.strictEqual(Array.isArray(res.body), true);
-			assert.strictEqual(res.body.length, 1);
-			assert.strictEqual(res.body[0].id, carolPost.id);
+				assert.strictEqual(res.status, 200);
+				assert.strictEqual(Array.isArray(res.body), true);
+				assert.strictEqual(res.body.length, 1);
+				assert.strictEqual(res.body[0].id, carolPost.id);
+			}, waitForPushToTlOptions);
 		});
 	});
 

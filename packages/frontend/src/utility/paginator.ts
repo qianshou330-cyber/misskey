@@ -19,6 +19,11 @@ export type MisskeyEntity = {
 	_shouldInsertAd_?: boolean;
 };
 
+export type OlderPageOptions = {
+	/** Select a bounded set of IDs immediately before committing an older page. */
+	beforeCommit?: (items: readonly MisskeyEntity[]) => readonly string[] | undefined;
+};
+
 type AbsEndpointType = {
 	req: unknown;
 	res: unknown;
@@ -57,8 +62,9 @@ export interface IPaginator<T = unknown, _T = T & MisskeyEntity> {
 
 	init(): Promise<void>;
 	reload(): Promise<void>;
-	fetchOlder(): Promise<void>;
-	fetchNewer(options?: { toQueue?: boolean }): Promise<void>;
+	fetchOlder(options?: OlderPageOptions | Event): Promise<void>;
+	invalidate(): void;
+	fetchNewer(options?: { toQueue?: boolean } & OlderPageOptions): Promise<void>;
 	trim(trigger?: boolean): void;
 	unshiftItems(newItems: (_T)[]): void;
 	pushItems(oldItems: (_T)[]): void;
@@ -107,6 +113,7 @@ export class Paginator<
 	private canFetchDetection: 'safe' | 'limit' | null = null;
 	private aheadQueue: T[] = [];
 	private useShallowRef: SRef;
+	private requestGeneration = 0;
 
 	// 配列内の要素をどのような順序で並べるか
 	// newest: 新しいものが先頭 (default)
@@ -191,6 +198,9 @@ export class Paginator<
 	}
 
 	public async init(): Promise<void> {
+		const generation = ++this.requestGeneration;
+		this.fetchingOlder.value = false;
+		this.fetchingNewer.value = false;
 		this.items.value = [];
 		this.aheadQueue = [];
 		this.queuedAheadItemsCount.value = 0;
@@ -213,13 +223,12 @@ export class Paginator<
 			} : {}),
 		};
 
-		const apiRes = (await misskeyApi(this.endpoint, data).catch(_ => {
+		const apiRes = (await misskeyApi(this.endpoint, data).catch(() => null)) as T[] | null;
+
+		if (generation !== this.requestGeneration) return;
+		if (apiRes == null) {
 			this.error.value = true;
 			this.fetching.value = false;
-			return null;
-		})) as T[] | null;
-
-		if (apiRes == null) {
 			return;
 		}
 
@@ -257,9 +266,14 @@ export class Paginator<
 		return this.init();
 	}
 
-	public async fetchOlder(): Promise<void> {
+	public invalidate(): void {
+		this.requestGeneration++;
+	}
+
+	public async fetchOlder(options: OlderPageOptions | Event = {}): Promise<void> {
 		if (!this.canFetchOlder.value || this.fetching.value || this.fetchingOlder.value || this.items.value.length === 0) return;
 		this.fetchingOlder.value = true;
+		const generation = this.requestGeneration;
 
 		const data: E['req'] = {
 			...(typeof this.params === 'function' ? this.params() : this.params),
@@ -277,6 +291,7 @@ export class Paginator<
 			return null;
 		})) as T[] | null;
 
+		if (generation !== this.requestGeneration) return;
 		this.fetchingOlder.value = false;
 
 		if (apiRes == null) {
@@ -288,11 +303,19 @@ export class Paginator<
 			if (i === 10) item._shouldInsertAd_ = true;
 		}
 
-		if (this.order.value === 'oldest') {
-			this.unshiftItems(apiRes.toReversed(), false);
-		} else {
-			this.pushItems(apiRes);
-		}
+		const seen = new Set(this.items.value.map(item => item.id));
+		const additions = apiRes.filter(item => {
+			if (seen.has(item.id)) return false;
+			seen.add(item.id);
+			return true;
+		});
+		const combined = this.order.value === 'oldest'
+			? [...additions.toReversed(), ...this.items.value]
+			: [...this.items.value, ...additions];
+		const retainedIds = 'beforeCommit' in options ? options.beforeCommit?.(combined) : undefined;
+		const keep = retainedIds ? new Set(retainedIds) : null;
+		const retained = keep ? combined.filter(item => keep.has(item.id)) : combined;
+		this.items.value = retained;
 
 		if (this.canFetchDetection === 'limit') {
 			if (apiRes.length < FIRST_FETCH_LIMIT) {
@@ -307,11 +330,15 @@ export class Paginator<
 				this.canFetchOlder.value = true;
 			}
 		}
+		// A trimmed older tail remains fetchable through the retained untilId.
+		if (retained.length < combined.length) this.canFetchOlder.value = true;
 	}
 
 	public async fetchNewer(options: {
 		toQueue?: boolean;
-	} = {}): Promise<void> {
+	} & OlderPageOptions = {}): Promise<void> {
+		if (this.fetching.value || this.fetchingNewer.value) return;
+		const generation = this.requestGeneration;
 		this.fetchingNewer.value = true;
 
 		const data: E['req'] = {
@@ -330,6 +357,7 @@ export class Paginator<
 			return null;
 		})) as T[] | null;
 
+		if (generation !== this.requestGeneration) return;
 		this.fetchingNewer.value = false;
 
 		if (apiRes == null || apiRes.length === 0) {
@@ -339,7 +367,12 @@ export class Paginator<
 		}
 
 		if (options.toQueue) {
-			this.aheadQueue.unshift(...apiRes.toReversed());
+			const seen = new Set([...this.items.value, ...this.aheadQueue].map(item => item.id));
+			this.aheadQueue.unshift(...apiRes.toReversed().filter(item => {
+				if (seen.has(item.id)) return false;
+				seen.add(item.id);
+				return true;
+			}));
 			if (this.aheadQueue.length > MAX_QUEUE_ITEMS) {
 				this.aheadQueue = this.aheadQueue.slice(0, MAX_QUEUE_ITEMS);
 			}
@@ -349,6 +382,13 @@ export class Paginator<
 				this.pushItems(apiRes);
 			} else {
 				this.unshiftItems(apiRes.toReversed(), false);
+			}
+			const retainedIds = options.beforeCommit?.(this.items.value);
+			if (retainedIds) {
+				const keep = new Set(retainedIds);
+				const beforeTrim = this.items.value.length;
+				this.items.value = this.items.value.filter(item => keep.has(item.id));
+				if (this.items.value.length < beforeTrim) this.canFetchOlder.value = true;
 			}
 		}
 
@@ -371,14 +411,24 @@ export class Paginator<
 
 	public unshiftItems(newItems: T[], trim = true): void {
 		if (newItems.length === 0) return; // これやらないと余計なre-renderが走る
-		this.items.value.unshift(...newItems.filter(x => !this.items.value.some(y => y.id === x.id))); // ストリーミングやポーリングのタイミングによっては重複することがあるため
+		const seen = new Set(this.items.value.map(item => item.id));
+		this.items.value.unshift(...newItems.filter(item => {
+			if (seen.has(item.id)) return false;
+			seen.add(item.id);
+			return true;
+		}));
 		if (trim) this.trim(true);
 		if (this.useShallowRef) triggerRef(this.items);
 	}
 
 	public pushItems(oldItems: T[]): void {
 		if (oldItems.length === 0) return; // これやらないと余計なre-renderが走る
-		this.items.value.push(...oldItems);
+		const seen = new Set(this.items.value.map(item => item.id));
+		this.items.value.push(...oldItems.filter(item => {
+			if (seen.has(item.id)) return false;
+			seen.add(item.id);
+			return true;
+		}));
 		if (this.useShallowRef) triggerRef(this.items);
 	}
 
@@ -390,6 +440,7 @@ export class Paginator<
 	}
 
 	public enqueue(item: T): void {
+		if (this.items.value.some(existing => existing.id === item.id) || this.aheadQueue.some(existing => existing.id === item.id)) return;
 		this.aheadQueue.unshift(item);
 		if (this.aheadQueue.length > MAX_QUEUE_ITEMS) {
 			this.aheadQueue.pop();

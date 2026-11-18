@@ -1,0 +1,16 @@
+{
+  "name": "pubo-snake-game",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "engines": { "node": ">=24 <27" },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node --max-old-space-size=384 dist/src/index.js",
+    "test": "npm run build && node --test dist/test/*.test.js",
+    "soak": "node dist/scripts/soak.js"
+  },
+  "dependencies": { "socket.io": "4.8.3" },
+  "devDependencies": { "@types/node": "24.10.1", "socket.io-client": "4.8.3", "typescript": "5.9.3" }
+}

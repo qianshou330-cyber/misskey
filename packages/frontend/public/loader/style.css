@@ -29,9 +29,11 @@ html {
 	bottom: 0;
 	left: 0;
 	margin: auto;
-	width: 64px;
-	height: 64px;
-	border-radius: 10px;
+	width: 160px;
+	height: auto;
+	max-width: min(60vw, 240px);
+	border-radius: 0;
+	object-fit: contain;
 	pointer-events: none;
 }
 

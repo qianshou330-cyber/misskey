@@ -6,6 +6,7 @@
 import { onUnmounted, reactive } from 'vue';
 import * as Misskey from 'misskey-js';
 import { EventEmitter } from 'eventemitter3';
+import { createVisibilityAwareInterval } from '@@/js/interval.js';
 import type { Reactive } from 'vue';
 import type { NoteUpdatedEvent } from 'misskey-js/streaming.types.js';
 import { useStream } from '@/stream.js';
@@ -68,7 +69,8 @@ const POLLING_INTERVAL =
 	prefer.s.pollingInterval === 3 ? MIN_POLLING_INTERVAL :
 	MIN_POLLING_INTERVAL;
 
-window.setInterval(() => {
+// documentが非表示の間はポーリングを停止する
+createVisibilityAwareInterval(() => {
 	const ids = [...pollingQueue.entries()]
 		.filter(([k, v]) => Date.now() - v.lastAddedAt < 1000 * 60 * 5) // 追加されてから一定時間経過したものは省く
 		.map(([k, v]) => k)
@@ -76,7 +78,6 @@ window.setInterval(() => {
 		.slice(0, CAPTURE_MAX);
 
 	if (ids.length === 0) return;
-	if (window.document.hidden) return;
 
 	// まとめてリクエストするのではなく、個別にHTTPリクエスト投げてCDNにキャッシュさせた方がサーバーの負荷低減には良いかもしれない？
 	misskeyApi('notes/show-partial-bulk', {
@@ -94,7 +95,7 @@ window.setInterval(() => {
 function pollingSubscribe(props: {
 	note: Pick<Misskey.entities.Note, 'id' | 'createdAt'>;
 	$note: ReactiveNoteData;
-}) {
+}): () => void {
 	const { note, $note } = props;
 
 	function onFetched(data: Pick<Misskey.entities.Note, 'reactions' | 'reactionEmojis'>): void {
@@ -106,15 +107,15 @@ function pollingSubscribe(props: {
 	pollingEnqueue(note);
 	fetchEvent.on(note.id, onFetched);
 
-	onUnmounted(() => {
+	return () => {
 		pollingDequeue(note);
 		fetchEvent.off(note.id, onFetched);
-	});
+	};
 }
 
 function realtimeSubscribe(props: {
 	note: Pick<Misskey.entities.Note, 'id' | 'createdAt'>;
-}): void {
+}): () => void {
 	const note = props.note;
 	const connection = useStream();
 
@@ -173,10 +174,10 @@ function realtimeSubscribe(props: {
 	capture(true);
 	connection.on('_connected_', onStreamConnected);
 
-	onUnmounted(() => {
+	return () => {
 		decapture(true);
 		connection.off('_connected_', onStreamConnected);
-	});
+	};
 }
 
 export type ReactiveNoteData = {
@@ -198,6 +199,8 @@ export function useNoteCapture(props: {
 	subscribe: () => void;
 } {
 	const { note, parentNote, mock } = props;
+	let disposed = false;
+	let unsubscribe: (() => void) | undefined;
 
 	const $note = reactive<ReactiveNoteData>({
 		reactions: Object.entries(note.reactions).reduce((acc, [name, count]) => {
@@ -281,17 +284,15 @@ export function useNoteCapture(props: {
 	}
 
 	function subscribe() {
-		if (mock) {
-			// モックモードでは購読しない
-			return;
-		}
+		// Manual subscriptions can happen after an asynchronous user action.
+		if (mock || disposed || unsubscribe != null) return;
 
 		if ($i && store.s.realtimeMode) {
-			realtimeSubscribe({
+			unsubscribe = realtimeSubscribe({
 				note,
 			});
 		} else {
-			pollingSubscribe({
+			unsubscribe = pollingSubscribe({
 				note,
 				$note,
 			});
@@ -299,6 +300,9 @@ export function useNoteCapture(props: {
 	}
 
 	onUnmounted(() => {
+		disposed = true;
+		unsubscribe?.();
+		unsubscribe = undefined;
 		noteEvents.off(`reacted:${note.id}`, onReacted);
 		noteEvents.off(`unreacted:${note.id}`, onUnreacted);
 		noteEvents.off(`pollVoted:${note.id}`, onPollVoted);
@@ -312,9 +316,7 @@ export function useNoteCapture(props: {
 			// リノートで表示されているノートでもないし、投稿からある程度経過しているので自動で購読しない
 			return {
 				$note,
-				subscribe: () => {
-					subscribe();
-				},
+				subscribe,
 			};
 		}
 	} else {
@@ -322,9 +324,7 @@ export function useNoteCapture(props: {
 			// リノートで表示されているノートだが、リノートされてからある程度経過しているので自動で購読しない
 			return {
 				$note,
-				subscribe: () => {
-					subscribe();
-				},
+				subscribe,
 			};
 		}
 	}
@@ -333,8 +333,6 @@ export function useNoteCapture(props: {
 
 	return {
 		$note,
-		subscribe: () => {
-			// すでに購読しているので何もしない
-		},
+		subscribe,
 	};
 }

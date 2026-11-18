@@ -10,6 +10,7 @@ import { Nirax } from '@/lib/nirax.js';
 import { ROUTE_DEF } from '@/router.definition.js';
 import { analytics } from '@/analytics.js';
 import { DI } from '@/di.js';
+import { cancelNativeDownload } from '@/utility/native-download.js';
 
 export type Router = Nirax<typeof ROUTE_DEF>;
 
@@ -40,6 +41,7 @@ mainRouter.addListener('forcePush', ctx => {
 });
 
 mainRouter.addListener('change', ctx => {
+	cancelNativeDownload();
 	if (_DEV_) console.log('mainRouter: change', ctx.fullPath);
 	analytics.page({
 		path: ctx.fullPath,

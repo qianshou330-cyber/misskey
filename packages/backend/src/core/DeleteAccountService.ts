@@ -5,7 +5,7 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import { Not, IsNull } from 'typeorm';
-import type { FollowingsRepository, MiMeta, MiUser, UsersRepository } from '@/models/_.js';
+import type { FollowingsRepository, MiMeta, MiUser, UsersRepository, VerificationApplicationsRepository, VerificationDocumentsRepository } from '@/models/_.js';
 import { QueueService } from '@/core/QueueService.js';
 import { DI } from '@/di-symbols.js';
 import { bindThis } from '@/decorators.js';
@@ -14,9 +14,14 @@ import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { ApRendererService } from '@/core/activitypub/ApRendererService.js';
 import { ModerationLogService } from '@/core/ModerationLogService.js';
 import { SystemAccountService } from '@/core/SystemAccountService.js';
+import { VerificationStorageService } from '@/core/VerificationStorageService.js';
+import { LoggerService } from '@/core/LoggerService.js';
+import type Logger from '@/logger.js';
 
 @Injectable()
 export class DeleteAccountService {
+	private readonly logger: Logger;
+
 	constructor(
 		@Inject(DI.meta)
 		private meta: MiMeta,
@@ -27,13 +32,22 @@ export class DeleteAccountService {
 		@Inject(DI.followingsRepository)
 		private followingsRepository: FollowingsRepository,
 
+		@Inject(DI.verificationApplicationsRepository)
+		private verificationApplicationsRepository: VerificationApplicationsRepository,
+
+		@Inject(DI.verificationDocumentsRepository)
+		private verificationDocumentsRepository: VerificationDocumentsRepository,
+
 		private userEntityService: UserEntityService,
 		private apRendererService: ApRendererService,
 		private queueService: QueueService,
 		private globalEventService: GlobalEventService,
 		private moderationLogService: ModerationLogService,
 		private systemAccountService: SystemAccountService,
+		private verificationStorageService: VerificationStorageService,
+		loggerService: LoggerService,
 	) {
+		this.logger = loggerService.getLogger('account-deletion');
 	}
 
 	@bindThis
@@ -56,6 +70,11 @@ export class DeleteAccountService {
 				userHost: user.host,
 			});
 		}
+
+		const verificationDocuments = await this.verificationDocumentsRepository.findBy({ userId: user.id });
+		await Promise.all(verificationDocuments.map(document => this.verificationStorageService.delete(document.storageKey).catch(error => this.logger.warn(`Unable to remove verification document ${document.id}: ${error}`))));
+		await this.verificationDocumentsRepository.delete({ userId: user.id });
+		await this.verificationApplicationsRepository.delete({ userId: user.id });
 
 		// 物理削除する前にDelete activityを送信する
 		if (this.userEntityService.isLocalUser(user)) {

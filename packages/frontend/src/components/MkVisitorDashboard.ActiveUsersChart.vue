@@ -5,17 +5,19 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 <template>
 <div>
-	<MkLoading v-if="fetching"/>
-	<div v-show="!fetching" :class="$style.root">
+	<MkError v-if="failed" @retry="loadChart"/>
+	<MkLoading v-else-if="fetching"/>
+	<div v-show="!fetching && !failed" :class="$style.root">
 		<canvas ref="chartEl"></canvas>
 	</div>
 </div>
 </template>
 
 <script lang="ts" setup>
-import { onMounted, useTemplateRef, ref, nextTick } from 'vue';
+import { onMounted, onUnmounted, useTemplateRef, ref, nextTick } from 'vue';
 import { Chart } from 'chart.js';
 import tinycolor from 'tinycolor2';
+import MkError from '@/components/global/MkError.vue';
 import { misskeyApi } from '@/utility/misskey-api.js';
 import { themeManager } from '@/theme.js';
 import { store } from '@/store.js';
@@ -30,10 +32,13 @@ const now = new Date();
 let chartInstance: Chart | null = null;
 const chartLimit = 30;
 const fetching = ref(true);
+const failed = ref(false);
+let controller: AbortController | undefined;
+let disposed = false;
 
 const { handler: externalTooltipHandler } = useChartTooltip();
 
-async function renderChart() {
+async function renderChart(signal: AbortSignal) {
 	if (chartInstance) {
 		chartInstance.destroy();
 	}
@@ -53,7 +58,8 @@ async function renderChart() {
 		}));
 	};
 
-	const raw = await misskeyApi('charts/active-users', { limit: chartLimit, span: 'day' });
+	const raw = await misskeyApi('charts/active-users', { limit: chartLimit, span: 'day' }, undefined, signal);
+	if (disposed || signal.aborted) return;
 
 	fetching.value = false;
 
@@ -152,8 +158,30 @@ async function renderChart() {
 	});
 }
 
-onMounted(async () => {
-	renderChart();
+async function loadChart() {
+	if (controller || disposed) return;
+	controller = new AbortController();
+	const request = controller;
+	const timer = window.setTimeout(() => request.abort(), 8000);
+	fetching.value = true;
+	failed.value = false;
+	try {
+		await renderChart(request.signal);
+	} catch {
+		if (!disposed) failed.value = true;
+	} finally {
+		window.clearTimeout(timer);
+		controller = undefined;
+		if (!disposed) fetching.value = false;
+	}
+}
+
+onMounted(() => { void loadChart(); });
+
+onUnmounted(() => {
+	disposed = true;
+	controller?.abort();
+	chartInstance?.destroy();
 });
 </script>
 

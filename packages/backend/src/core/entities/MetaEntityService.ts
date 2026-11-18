@@ -15,6 +15,8 @@ import { SystemAccountService } from '@/core/SystemAccountService.js';
 import type { Config } from '@/config.js';
 import { DI } from '@/di-symbols.js';
 import { DEFAULT_POLICIES } from '@/core/RoleService.js';
+import { nativePushCredentials } from '@/misc/native-push.js';
+import { isSnakeGameEnabled } from '@/misc/snake-session.js';
 
 @Injectable()
 export class MetaEntityService {
@@ -110,6 +112,8 @@ export class MetaEntityService {
 			defaultLightTheme,
 			defaultDarkTheme,
 			clientOptions: instance.clientOptions,
+			snakeGameEnabled: await isSnakeGameEnabled(this.config),
+			nativePushAvailable: await nativePushCredentials(this.config.nativePush) !== null,
 			ads: ads.map(ad => ({
 				id: ad.id,
 				url: ad.url,
@@ -175,4 +179,3 @@ export class MetaEntityService {
 		return packDetailed;
 	}
 }
-

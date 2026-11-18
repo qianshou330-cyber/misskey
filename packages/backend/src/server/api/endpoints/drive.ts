@@ -5,7 +5,7 @@
 
 import { Injectable } from '@nestjs/common';
 import { Endpoint } from '@/server/api/endpoint-base.js';
-import { DriveFileEntityService } from '@/core/entities/DriveFileEntityService.js';
+import { UserStorageQuotaService } from '@/core/UserStorageQuotaService.js';
 import { RoleService } from '@/core/RoleService.js';
 
 export const meta = {
@@ -27,6 +27,9 @@ export const meta = {
 				type: 'number',
 				optional: false, nullable: false,
 			},
+			driveUsage: { type: 'number', optional: false, nullable: false },
+			chatUsage: { type: 'number', optional: false, nullable: false },
+			reservedUsage: { type: 'number', optional: false, nullable: false },
 		},
 	},
 } as const;
@@ -40,17 +43,20 @@ export const paramDef = {
 @Injectable()
 export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-disable-line import/no-default-export
 	constructor(
-		private driveFileEntityService: DriveFileEntityService,
+		private userStorageQuotaService: UserStorageQuotaService,
 		private roleService: RoleService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
-			const usage = await this.driveFileEntityService.calcDriveUsageOf(me.id);
+			const usage = await this.userStorageQuotaService.usage(me.id);
 
 			const policies = await this.roleService.getUserPolicies(me.id);
 
 			return {
 				capacity: 1024 * 1024 * policies.driveCapacityMb,
-				usage: usage,
+				usage: usage.total,
+				driveUsage: usage.drive,
+				chatUsage: usage.chat,
+				reservedUsage: usage.reserved,
 			};
 		});
 	}

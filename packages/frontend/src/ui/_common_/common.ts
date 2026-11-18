@@ -14,6 +14,11 @@ import { $i } from '@/i.js';
 function toolsMenuItems(): MenuItem[] {
 	const items: MenuItem[] = [{
 		type: 'link',
+		to: '/music-charts/kpop',
+		text: i18n.ts._musicCharts.kpopTitle,
+		icon: 'ti ti-chart-line',
+	}, {
+		type: 'link',
 		to: '/scratchpad',
 		text: i18n.ts.scratchpad,
 		icon: 'ti ti-terminal-2',
@@ -61,6 +66,11 @@ export function openInstanceMenu(ev: PointerEvent) {
 		text: i18n.ts.instanceInfo,
 		icon: 'ti ti-info-circle',
 		to: '/about',
+	}, {
+		type: 'link',
+		text: i18n.ts._androidApp.download,
+		icon: 'ti ti-brand-android',
+		to: '/download/android',
 	}, {
 		type: 'link',
 		text: i18n.ts.customEmojis,

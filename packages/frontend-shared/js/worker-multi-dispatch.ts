@@ -16,11 +16,40 @@ export class WorkerMultiDispatch<POST = unknown, RETURN = unknown> {
 	private prevWorkerNumber = 0;
 	private getUseWorkerNumber: WorkerNumberGetter;
 	private finalizationRegistry: FinalizationRegistry<symbol>;
+	private listeners = new Set<(this: Worker, ev: MessageEvent<RETURN>) => unknown>();
+	private workerListeners = new Map<Worker, EventListener>();
 
 	constructor(workerConstructor: () => Worker, concurrency: number, getUseWorkerNumber = defaultUseWorkerNumber) {
 		this.getUseWorkerNumber = getUseWorkerNumber;
-		for (let i = 0; i < concurrency; i++) {
-			this.workers.push(workerConstructor());
+		const workerCount = Number.isFinite(concurrency) ? Math.max(1, Math.floor(concurrency)) : 1;
+		for (let i = 0; i < workerCount; i++) {
+			const worker = workerConstructor();
+			const listener: EventListener = (event) => {
+				let handled = false;
+				let callbackError: unknown;
+				for (const callback of this.listeners) {
+					try {
+						if (callback.call(worker, event as MessageEvent<RETURN>) === true) handled = true;
+					} catch (error) {
+						callbackError ??= error;
+					}
+				}
+
+				if (!handled) {
+					// Workers used for image placeholders transfer ImageBitmaps. If a
+					// component was unmounted before its response arrived, close the
+					// bitmap instead of retaining a GPU-backed resource.
+					const bitmap = (event as MessageEvent<{ bitmap?: unknown }>).data?.bitmap;
+					if (bitmap && typeof bitmap === 'object') {
+						const release = Reflect.get(bitmap, 'close');
+						if (typeof release === 'function') Reflect.apply(release, bitmap, []);
+					}
+				}
+				if (callbackError !== undefined) throw callbackError;
+			};
+			worker.addEventListener('message', listener);
+			this.workerListeners.set(worker, listener);
+			this.workers.push(worker);
 		}
 
 		this.finalizationRegistry = new FinalizationRegistry(() => {
@@ -48,27 +77,27 @@ export class WorkerMultiDispatch<POST = unknown, RETURN = unknown> {
 		return workerNumber;
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	public addListener(callback: (this: Worker, ev: MessageEvent<RETURN>) => any, options?: boolean | AddEventListenerOptions) {
-		this.workers.forEach(worker => {
-			worker.addEventListener('message', callback, options);
-		});
+	public addListener(callback: (this: Worker, ev: MessageEvent<RETURN>) => unknown, options?: boolean | AddEventListenerOptions) {
+		void options; // Listener options are retained for API compatibility.
+		this.listeners.add(callback);
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	public removeListener(callback: (this: Worker, ev: MessageEvent<RETURN>) => any, options?: boolean | AddEventListenerOptions) {
-		this.workers.forEach(worker => {
-			worker.removeEventListener('message', callback, options);
-		});
+	public removeListener(callback: (this: Worker, ev: MessageEvent<RETURN>) => unknown, options?: boolean | EventListenerOptions) {
+		void options;
+		this.listeners.delete(callback);
 	}
 
 	public terminate() {
 		this.terminated = true;
 		if (_DEV_) console.log('WorkerMultiDispatch: Terminating', this);
 		this.workers.forEach(worker => {
+			const listener = this.workerListeners.get(worker);
+			if (listener) worker.removeEventListener('message', listener);
 			worker.terminate();
 		});
 		this.workers = [];
+		this.workerListeners.clear();
+		this.listeners.clear();
 		this.finalizationRegistry.unregister(this);
 	}
 

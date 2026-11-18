@@ -36,6 +36,7 @@ export const paramDef = {
 		sinceDate: { type: 'integer' },
 		untilDate: { type: 'integer' },
 		isActive: { type: 'boolean', default: true },
+		display: { type: 'string', enum: ['normal', 'banner', 'dialog', 'marquee'] },
 	},
 	required: [],
 } as const;
@@ -56,6 +57,13 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 					if (me) qb.orWhere('announcement.userId = :meId', { meId: me.id });
 					qb.orWhere('announcement.userId IS NULL');
 				}));
+
+			if (ps.display !== undefined) {
+				query.andWhere('announcement.display = :display', { display: ps.display });
+			}
+			if (ps.display === 'marquee') {
+				query.andWhere('announcement.userId IS NULL');
+			}
 
 			const announcements = await query.limit(ps.limit).getMany();
 

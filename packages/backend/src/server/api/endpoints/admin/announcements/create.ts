@@ -5,7 +5,8 @@
 
 import { Injectable } from '@nestjs/common';
 import { Endpoint } from '@/server/api/endpoint-base.js';
-import { AnnouncementService } from '@/core/AnnouncementService.js';
+import { AnnouncementService, InvalidMarqueeAnnouncementError } from '@/core/AnnouncementService.js';
+import { ApiError } from '../../../error.js';
 
 export const meta = {
 	tags: ['admin'],
@@ -13,6 +14,14 @@ export const meta = {
 	requireCredential: true,
 	requireModerator: true,
 	kind: 'write:admin:announcements',
+
+	errors: {
+		invalidMarqueeAnnouncement: {
+			message: 'Marquee announcements must be global.',
+			code: 'INVALID_MARQUEE_ANNOUNCEMENT',
+			id: '8035aab4-6516-47b4-84dd-3b3b7aff07ec',
+		},
+	},
 
 	res: {
 		type: 'object',
@@ -57,7 +66,7 @@ export const paramDef = {
 		text: { type: 'string', minLength: 1 },
 		imageUrl: { type: 'string', nullable: true, minLength: 0 },
 		icon: { type: 'string', enum: ['info', 'warning', 'error', 'success'], default: 'info' },
-		display: { type: 'string', enum: ['normal', 'banner', 'dialog'], default: 'normal' },
+		display: { type: 'string', enum: ['normal', 'banner', 'dialog', 'marquee'], default: 'normal' },
 		forExistingUsers: { type: 'boolean', default: false },
 		silence: { type: 'boolean', default: false },
 		needConfirmationToRead: { type: 'boolean', default: false },
@@ -84,7 +93,10 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				silence: ps.silence,
 				needConfirmationToRead: ps.needConfirmationToRead,
 				userId: ps.userId,
-			}, me);
+			}, me).catch(err => {
+				if (err instanceof InvalidMarqueeAnnouncementError) throw new ApiError(meta.errors.invalidMarqueeAnnouncement);
+				throw err;
+			});
 
 			return packed;
 		});

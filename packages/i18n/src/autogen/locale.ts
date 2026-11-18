@@ -2489,6 +2489,14 @@ export interface Locale extends ILocale {
      */
     "updateRemoteUser": string;
     /**
+     * 二要素認証を解除
+     */
+    "unsetMfa": string;
+    /**
+     * 二要素認証を解除しますか？
+     */
+    "unsetMfaConfirm": string;
+    /**
      * アイコンを解除
      */
     "unsetUserAvatar": string;
@@ -4165,6 +4173,10 @@ export interface Locale extends ILocale {
      */
     "cannotLoad": string;
     /**
+     * プレビューできません
+     */
+    "cannotPreview": string;
+    /**
      * プロフィール表示回数
      */
     "numberOfProfileView": string;
@@ -5457,14 +5469,6 @@ export interface Locale extends ILocale {
      */
     "directMessage_short": string;
     /**
-     * 旧設定情報を移行
-     */
-    "migrateOldSettings": string;
-    /**
-     * 通常これは自動で行われていますが、何らかの理由により上手く移行されなかった場合は手動で移行処理をトリガーできます。現在の設定情報は上書きされます。
-     */
-    "migrateOldSettings_description": string;
-    /**
      * 圧縮
      */
     "compress": string;
@@ -5484,10 +5488,6 @@ export interface Locale extends ILocale {
      * 埋め込み
      */
     "embed": string;
-    /**
-     * 設定を移行しています。しばらくお待ちください... (後ほど、設定→その他→旧設定情報を移行 で手動で移行することもできます)
-     */
-    "settingsMigrating": string;
     /**
      * 読み取り専用
      */
@@ -5695,6 +5695,18 @@ export interface Locale extends ILocale {
      * 先頭に追加
      */
     "prepend": string;
+    /**
+     * サムネイルの表示を制限するURL
+     */
+    "urlPreviewSensitiveList": string;
+    /**
+     * スペースで区切るとAND指定になり、改行で区切るとOR指定になります。スラッシュで囲むと正規表現になります。一致した場合、サムネイルが表示されなくなります。
+     */
+    "urlPreviewSensitiveListDescription": string;
+    /**
+     * ピクセルアート拡大モード
+     */
+    "pixelatedZoom": string;
     "_imageEditing": {
         "_vars": {
             /**
@@ -8390,6 +8402,42 @@ export interface Locale extends ILocale {
          * 静止画に加えて動画も解析するようにします。サーバーの負荷が少し増えます。
          */
         "analyzeVideosDescription": string;
+        /**
+         * センシティブメディアの判定は外部サービス (sensitive-detector) に分離されました。この機能を利用するには、別途サイドカーサービスをセットアップし、下記の接続先を設定する必要があります。接続先が未設定の場合、判定は行われません (非センシティブ扱い)。
+         */
+        "externalServiceInfo": string;
+        /**
+         * 判定サービスの接続先URL
+         */
+        "apiUrl": string;
+        /**
+         * sensitive-detector サービスのベースURL (例: http://localhost:3009)。プライベートネットワーク上のサービスに接続する場合は、設定ファイルの allowedPrivateNetworks で接続先ネットワークを許可してください。プロキシを使用している場合は、proxyBypassHosts も設定してください。空欄の場合、センシティブ判定は行われません。
+         */
+        "apiUrlDescription": string;
+        /**
+         * APIキー
+         */
+        "apiKey": string;
+        /**
+         * 判定サービス側で認証 (Bearerトークン) を設定している場合に入力します。設定していない場合は空欄のままにしてください。
+         */
+        "apiKeyDescription": string;
+        /**
+         * タイムアウト (ミリ秒)
+         */
+        "timeout": string;
+        /**
+         * 判定リクエスト1回あたりのタイムアウト時間です。
+         */
+        "timeoutDescription": string;
+        /**
+         * 1リクエストあたりの最大画像数
+         */
+        "maxImagesPerRequest": string;
+        /**
+         * 動画など複数フレームを判定する際、1回のリクエストにまとめて送る画像の最大枚数です。これを超える分は分割して順次送信されます。sensitive-detector 側の maxParts 設定（デフォルト: 10）を超えないように設定してください。超えた場合、そのチャンクは全件非センシティブ扱いとなります。
+         */
+        "maxImagesPerRequestDescription": string;
     };
     "_emailUnavailable": {
         /**
@@ -9579,6 +9627,10 @@ export interface Locale extends ILocale {
          */
         "write:admin:suspend-user": string;
         /**
+         * ユーザーの二要素認証を解除する
+         */
+        "write:admin:unset-mfa": string;
+        /**
          * ユーザーのアバターを削除する
          */
         "write:admin:unset-user-avatar": string;
@@ -10404,6 +10456,278 @@ export interface Locale extends ILocale {
          * フォローを承認制にしている場合、フォローリクエストを許可した時に表示されます。
          */
         "followedMessageDescriptionForLockedAccount": string;
+    };
+    "_verification": {
+        /**
+         * 認証申請
+         */
+        "title": string;
+        /**
+         * 本人確認資料を提出すると、管理者が認証申請を審査します。承認されると、プロフィールとノートに認証バッジが表示されます。
+         */
+        "description": string;
+        /**
+         * 認証区分
+         */
+        "type": string;
+        /**
+         * 活動内容に最も近い区分を選択してください。審査時に管理者が変更する場合があります。
+         */
+        "typeDescription": string;
+        /**
+         * 活動内容と認証理由
+         */
+        "descriptionLabel": string;
+        /**
+         * 公開プロフィールや活動実績など、認証を希望する理由を記入してください。
+         */
+        "descriptionCaption": string;
+        /**
+         * 連絡先
+         */
+        "contact": string;
+        /**
+         * 審査に必要な連絡先を入力してください。公開されません。
+         */
+        "contactCaption": string;
+        /**
+         * 本人確認資料（表面）
+         */
+        "frontDocument": string;
+        /**
+         * 本人確認資料（裏面）
+         */
+        "backDocument": string;
+        /**
+         * ファイルを選択
+         */
+        "chooseFile": string;
+        /**
+         * 未選択
+         */
+        "noFile": string;
+        /**
+         * 提出済み
+         */
+        "documentSubmitted": string;
+        /**
+         * 資料の取り扱いに同意します
+         */
+        "consent": string;
+        /**
+         * 提出する資料を認証審査の目的で使用し、すべての管理者が確認できることに同意します。資料へのアクセスは記録されます。
+         */
+        "consentCaption": string;
+        /**
+         * 本人確認資料と連絡先は公開プロフィール、ノート、ActivityPub のデータには含まれません。資料は暗号化して保管し、申請の取り下げ、アカウント削除、または管理者による削除まで保存します。取り下げると認証バッジも取り消されます。
+         */
+        "privacyNote": string;
+        /**
+         * 認証申請を審査中です。しばらくお待ちください。
+         */
+        "pending": string;
+        /**
+         * 認証申請が承認されました。認証バッジが有効です。
+         */
+        "approved": string;
+        /**
+         * 認証申請が承認されませんでした。内容を修正して再申請できます。
+         */
+        "rejected": string;
+        /**
+         * 認証が取り消されました。必要に応じて再申請してください。
+         */
+        "revoked": string;
+        /**
+         * 審査メモ
+         */
+        "reviewNote": string;
+        /**
+         * 認証を申請
+         */
+        "submit": string;
+        /**
+         * 申請中…
+         */
+        "submitting": string;
+        /**
+         * 申請を送信しました
+         */
+        "submitted": string;
+        /**
+         * 認証申請を受け付けました。管理者の審査をお待ちください。
+         */
+        "submittedDescription": string;
+        /**
+         * 認証申請の送信に失敗しました
+         */
+        "submitFailed": string;
+        /**
+         * 資料のアップロードに失敗しました
+         */
+        "uploadFailed": string;
+        /**
+         * JPEG、PNG、またはWebP画像を選択してください。
+         */
+        "invalidFileType": string;
+        /**
+         * ファイルサイズは10MB以下にしてください。
+         */
+        "fileTooLarge": string;
+        /**
+         * 申請を取り下げる
+         */
+        "withdraw": string;
+        /**
+         * 認証申請を取り下げますか？
+         */
+        "withdrawConfirm": string;
+        /**
+         * 認証申請を取り下げました
+         */
+        "withdrawn": string;
+        /**
+         * 認証申請の取り下げに失敗しました
+         */
+        "withdrawFailed": string;
+        "_type": {
+            /**
+             * 俳優
+             */
+            "actor": string;
+            /**
+             * 歌手
+             */
+            "singer": string;
+            /**
+             * モデル
+             */
+            "model": string;
+            /**
+             * インフルエンサー・クリエイター
+             */
+            "contentCreator": string;
+            /**
+             * 小説家
+             */
+            "novelist": string;
+            /**
+             * その他
+             */
+            "other": string;
+        };
+        /**
+         * 認証申請の審査
+         */
+        "adminTitle": string;
+        /**
+         * 本人確認資料を確認し、認証区分を確定して申請を審査します。
+         */
+        "adminDescription": string;
+        /**
+         * 認証申請の処理には管理者権限が必要です。
+         */
+        "adminOnly": string;
+        /**
+         * 状態
+         */
+        "statusFilter": string;
+        /**
+         * すべて
+         */
+        "allStatuses": string;
+        /**
+         * 認証申請はありません。
+         */
+        "noRequests": string;
+        /**
+         * 認証申請の読み込みに失敗しました
+         */
+        "loadFailed": string;
+        /**
+         * 申請者
+         */
+        "applicant": string;
+        /**
+         * 申請日時
+         */
+        "submittedAt": string;
+        /**
+         * 申請区分
+         */
+        "requestedType": string;
+        /**
+         * 承認区分
+         */
+        "approvedType": string;
+        /**
+         * 提出資料
+         */
+        "documents": string;
+        /**
+         * 資料を表示できません
+         */
+        "documentUnavailable": string;
+        /**
+         * 承認
+         */
+        "approve": string;
+        /**
+         * 却下
+         */
+        "reject": string;
+        /**
+         * 認証を取り消す
+         */
+        "revoke": string;
+        /**
+         * この認証申請を承認しますか？
+         */
+        "approveConfirm": string;
+        /**
+         * 認証申請を却下
+         */
+        "rejectTitle": string;
+        /**
+         * 却下理由を入力してください（任意）
+         */
+        "rejectPrompt": string;
+        /**
+         * 認証を取り消す
+         */
+        "revokeTitle": string;
+        /**
+         * 取り消し理由を入力してください（任意）
+         */
+        "revokePrompt": string;
+        /**
+         * このユーザーの認証を取り消しますか？
+         */
+        "revokeConfirm": string;
+        /**
+         * 審査処理に失敗しました
+         */
+        "reviewFailed": string;
+        /**
+         * 認証申請を承認しました
+         */
+        "approvedNotice": string;
+        /**
+         * 認証申請を却下しました
+         */
+        "rejectedNotice": string;
+        /**
+         * 認証を取り消しました
+         */
+        "revokedNotice": string;
+        /**
+         * 審査理由
+         */
+        "reviewReason": string;
+        /**
+         * 更新
+         */
+        "refresh": string;
     };
     "_exportOrImport": {
         /**
@@ -11549,6 +11873,10 @@ export interface Locale extends ILocale {
          */
         "deleteAvatarDecoration": string;
         /**
+         * ユーザーの二要素認証を解除
+         */
+        "unsetMfa": string;
+        /**
          * ユーザーのアイコンを解除
          */
         "unsetUserAvatar": string;
@@ -11604,6 +11932,18 @@ export interface Locale extends ILocale {
          * プロキシアカウントの説明を更新
          */
         "updateProxyAccountDescription": string;
+        /**
+         * 認証申請を審査
+         */
+        "reviewVerification": string;
+        /**
+         * 認証申請を閲覧
+         */
+        "viewVerificationApplication": string;
+        /**
+         * 認証資料を閲覧
+         */
+        "viewVerificationDocument": string;
     };
     "_fileViewer": {
         /**
@@ -13321,5 +13661,1261 @@ export interface Locale extends ILocale {
          * MFM
          */
         "mfm": string;
+    };
+    "_chatDaily": {
+        /**
+         * 引用して返信
+         */
+        "reply": string;
+        /**
+         * 引用を取り消す
+         */
+        "cancelReply": string;
+        /**
+         * 元のメッセージへの返信
+         */
+        "replyPending": string;
+        /**
+         * 元のメッセージ
+         */
+        "originalMessage": string;
+        /**
+         * 相手
+         */
+        "otherPerson": string;
+        /**
+         * 元のメッセージを表示できません
+         */
+        "replyUnavailable": string;
+        /**
+         * 元のメッセージは取り消されました
+         */
+        "replyRecalled": string;
+        /**
+         * 元のメッセージを表示できません。もう一度お試しください。
+         */
+        "contextFailed": string;
+        /**
+         * 元のメッセージ付近を表示しています
+         */
+        "contextViewing": string;
+        /**
+         * チャットをピン留め
+         */
+        "pin": string;
+        /**
+         * ピン留めを解除
+         */
+        "unpin": string;
+        /**
+         * ピン留め
+         */
+        "pinned": string;
+        /**
+         * 通知をミュート
+         */
+        "mute": string;
+        /**
+         * 通知ミュートを解除
+         */
+        "unmute": string;
+        /**
+         * 通知ミュート中
+         */
+        "muted": string;
+        /**
+         * チャット設定
+         */
+        "settings": string;
+        /**
+         * チャット設定を更新できません。もう一度お試しください。
+         */
+        "settingsFailed": string;
+        /**
+         * ピン留めは10件までです。先に別のピン留めを解除してください。
+         */
+        "pinLimit": string;
+        /**
+         * メッセージを送ってからピン留めしてください。
+         */
+        "pinNeedsHistory": string;
+    };
+    "_chatPro": {
+        /**
+         * 相手から返信があるまでは、メッセージを1件だけ送信できます。返信を待ってから続きを送信してください。
+         */
+        "replyRequired": string;
+        /**
+         * 相手から返信があるまでは、テキストメッセージを1件だけ送信できます。
+         */
+        "firstMessageTextOnly": string;
+        /**
+         * 相互フォローしていない人もテキストで1件だけ連絡できます。返信すると、続けて会話できるようになります。
+         */
+        "mutualFirstMessageHint": string;
+        /**
+         * 添付ファイルの使用量が上限に達しました。ほかのプレビューや再生を閉じて再試行してください。
+         */
+        "mediaBudget": string;
+        /**
+         * 送信待ちのメッセージまたは添付ファイルが無効です。本文をコピーして、この項目を削除し、添付ファイルを選び直してください。
+         */
+        "expiredPending": string;
+        /**
+         * 送信待ちから削除
+         */
+        "discardPending": string;
+        /**
+         * 再生
+         */
+        "play": string;
+        /**
+         * 一時停止
+         */
+        "pause": string;
+        /**
+         * 送信中
+         */
+        "sending": string;
+        /**
+         * 送信失敗・再試行
+         */
+        "failed": string;
+        /**
+         * 送信済み
+         */
+        "sent": string;
+        /**
+         * 既読
+         */
+        "read": string;
+        /**
+         * 以前のメッセージの既読状態は不明です
+         */
+        "unknownRead": string;
+        /**
+         * 編集済み
+         */
+        "edited": string;
+        /**
+         * メッセージは取り消されました
+         */
+        "recalled": string;
+        /**
+         * 送信を取り消す
+         */
+        "recall": string;
+        /**
+         * 取り消すと双方のチャットでこのメッセージを表示できなくなります。
+         */
+        "recallConfirm": string;
+        /**
+         * 別の端末で変更または取り消されました。編集内容を保存し、最新の内容を確認してください。
+         */
+        "editConflict": string;
+        /**
+         * 送信後24時間以内のテキストを編集できます。
+         */
+        "editWindow": string;
+        /**
+         * メッセージを同期中…
+         */
+        "syncing": string;
+        /**
+         * 接続が切れました。再接続中…
+         */
+        "reconnecting": string;
+        /**
+         * 新しいメッセージを読み込む
+         */
+        "loadNewer": string;
+        /**
+         * 最新のメッセージへ
+         */
+        "newest": string;
+        /**
+         * 連絡先
+         */
+        "contacts": string;
+        /**
+         * 連絡先グループ
+         */
+        "groups": string;
+        /**
+         * すべての連絡先
+         */
+        "allContacts": string;
+        /**
+         * グループを作成
+         */
+        "createGroup": string;
+        /**
+         * 個別チャットをブロック
+         */
+        "chatBlock": string;
+        /**
+         * 個別チャットのブロックを解除
+         */
+        "chatUnblock": string;
+        /**
+         * チャットのブロックリスト
+         */
+        "chatBlocked": string;
+        /**
+         * 個別チャットだけを禁止します。フォローや全体のブロック設定は変更しません。
+         */
+        "chatBlockHint": string;
+        /**
+         * グループに追加
+         */
+        "addToGroup": string;
+        /**
+         * グループから削除
+         */
+        "removeFromGroup": string;
+        /**
+         * 連絡先グループはありません
+         */
+        "noGroup": string;
+        /**
+         * 添付ファイルを追加
+         */
+        "attachments": string;
+        /**
+         * 1件につき最大10ファイル、各50 MBまで（アカウントの制限も適用されます）。
+         */
+        "attachmentLimit": string;
+        /**
+         * アップロードに失敗しました
+         */
+        "uploadFailed": string;
+        /**
+         * 非公開の添付ファイル
+         */
+        "protectedFile": string;
+        /**
+         * 添付ファイルを利用できません
+         */
+        "fileUnavailable": string;
+        /**
+         * 音声メッセージ
+         */
+        "voice": string;
+        /**
+         * 録音
+         */
+        "record": string;
+        /**
+         * 録音を終了
+         */
+        "stopRecording": string;
+        /**
+         * 録音中（最大5分）
+         */
+        "recording": string;
+        /**
+         * 録音できません。マイクの権限とブラウザーの対応を確認してください。
+         */
+        "microphoneError": string;
+        /**
+         * 録音を停止しました。録音できた部分があれば、プレビューを確認して送信できます。
+         */
+        "recordingInterrupted": string;
+        /**
+         * ブラウザーが再生を停止しました。もう一度再生ボタンを押してください。
+         */
+        "playbackTap": string;
+        /**
+         * この音声を使用
+         */
+        "sendVoice": string;
+        /**
+         * 録音を破棄
+         */
+        "discardRecording": string;
+        /**
+         * プレビュー
+         */
+        "preview": string;
+        /**
+         * ダウンロード
+         */
+        "download": string;
+        /**
+         * このファイルには以前公開リンクがありました。既に保存されたコピーは回収できません。
+         */
+        "legacyFile": string;
+        /**
+         * 以前の未読メッセージがあります
+         */
+        "unknownUnread": string;
+        /**
+         * 再試行
+         */
+        "retry": string;
+        /**
+         * 送信待ちのメッセージが多すぎます。失敗したメッセージを再試行してください。
+         */
+        "outboxFull": string;
+        /**
+         * チャットを選択して会話を続けましょう
+         */
+        "selectConversation": string;
+        /**
+         * 添付ファイルのサイズ制限を超えています
+         */
+        "tooLarge": string;
+        /**
+         * 連絡先が見つかりません
+         */
+        "noContactResults": string;
+        /**
+         * 読み込みに失敗しました。再試行してください
+         */
+        "loadingFailed": string;
+        /**
+         * 新しいチャットを使用するにはページを再読み込みしてください。
+         */
+        "refreshRequired": string;
+        /**
+         * メッセージを編集
+         */
+        "editMessage": string;
+        /**
+         * 個別チャット
+         */
+        "privateChat": string;
+        /**
+         * ドライブから選択
+         */
+        "fromDrive": string;
+        /**
+         * 端末からアップロード
+         */
+        "fromDevice": string;
+        /**
+         * グループを削除しても連絡先やフォロー関係は変更されません。
+         */
+        "confirmGroupDelete": string;
+    };
+    "_musicCharts": {
+        /**
+         * 韓国第5世代ガールズグループ音源チャート
+         */
+        "kpopTitle": string;
+        /**
+         * 韓国チャート · 1時間ごとに更新
+         */
+        "kpopSubtitle": string;
+        /**
+         * 音楽サービスを選択
+         */
+        "kpopPlatform": string;
+        /**
+         * 騰訊由你
+         */
+        "kpopTencentName": string;
+        /**
+         * HOT100 · 100日
+         */
+        "kpopHot100": string;
+        /**
+         * HOT100 · 30日
+         */
+        "kpopHot30": string;
+        /**
+         * FLO 全年齢 TOP100
+         */
+        "kpopFlo": string;
+        /**
+         * Apple Music 韓国 TOP100
+         */
+        "kpopApple": string;
+        /**
+         * Spotify 韓国 TOP50
+         */
+        "kpopSpotify": string;
+        /**
+         * 騰訊由你韓国語 · 上位10曲プレビュー
+         */
+        "kpopTencent": string;
+        /**
+         * Billboard Korea Global K-Songs · 週間チャート
+         */
+        "kpopBillboard": string;
+        /**
+         * 世界の K-pop 週間チャート · 1時間ごとに確認
+         */
+        "kpopBillboardUpdate": string;
+        /**
+         * 週間チャートの号日付
+         */
+        "kpopBillboardIssueDate": string;
+        /**
+         * 日付は公式の週間チャート表記で、公開日時ではありません。推移は当サイトの観測日時で記録します。
+         */
+        "kpopBillboardPeriodHint": string;
+        /**
+         * すべてのガールズグループ
+         */
+        "kpopAllGroups": string;
+        /**
+         * グループを選択
+         */
+        "kpopGroup": string;
+        /**
+         * 曲を検索
+         */
+        "kpopSearch": string;
+        /**
+         * 前回の結果
+         */
+        "kpopPrevious": string;
+        /**
+         * データの期限切れ
+         */
+        "kpopStale": string;
+        /**
+         * 更新休止中（取得元の制限）
+         */
+        "kpopRestricted": string;
+        /**
+         * 取得元の確認待ち
+         */
+        "kpopDisabled": string;
+        /**
+         * 公開プレビュー {count}/{total}
+         */
+        "kpopPreviewCount": ParameterizedString<"count" | "total">;
+        /**
+         * 公開プレビュー上位{count}曲
+         */
+        "kpopPreview": ParameterizedString<"count">;
+        /**
+         * 全{count}曲
+         */
+        "kpopComplete": ParameterizedString<"count">;
+        /**
+         * プレイリスト上の位置
+         */
+        "kpopPlaylist": string;
+        /**
+         * プレイリストの{rank}番目
+         */
+        "kpopPlaylistRank": ParameterizedString<"rank">;
+        /**
+         * 公開プレビューに見つかりません。全体の圏外を意味しません。
+         */
+        "kpopPreviewMissing": string;
+        /**
+         * 一致する曲はありません。
+         */
+        "kpopNoMatch": string;
+        /**
+         * 確認済みデータなし
+         */
+        "kpopNoData": string;
+        /**
+         * 当サイトの観測日時
+         */
+        "kpopObserved": string;
+        /**
+         * 過去7日間の観測記録
+         */
+        "kpopObservedHistory": string;
+        /**
+         * 当サイトの取得日時で記録し、取得元の集計日時は別に表示します。欠損順位は補完せず、プレビューでの不在を全体の圏外とは扱いません。
+         */
+        "kpopHistoryHint": string;
+        /**
+         * 取得元に完全な集計日時がありません
+         */
+        "kpopPeriodUnknown": string;
+        /**
+         * 新着
+         */
+        "kpopNew": string;
+        /**
+         * 次のページ
+         */
+        "kpopMore": string;
+        /**
+         * 前のページ
+         */
+        "kpopBack": string;
+        /**
+         * 曲を選ぶと過去7日間の記録を表示します。
+         */
+        "kpopChooseSong": string;
+        /**
+         * 「{title}」の記録を見る
+         */
+        "kpopSongDetails": ParameterizedString<"title">;
+        /**
+         * 「{title}」を選択中
+         */
+        "kpopSelectedSong": ParameterizedString<"title">;
+        /**
+         * 60秒ごとに当サイトのキャッシュを確認します。ページの更新で取得元へのアクセスが早まることはありません。
+         */
+        "kpopRefreshHint": string;
+        /**
+         * 位置
+         */
+        "kpopPosition": string;
+        /**
+         * 一致する曲：{count}曲
+         */
+        "kpopRecords": ParameterizedString<"count">;
+        /**
+         * 有効なチャートを取得するまで順位は表示しません。
+         */
+        "kpopPendingFirst": string;
+        /**
+         * 過去7日間の最高順位
+         */
+        "kpopBest7d": string;
+        /**
+         * 最終取得成功
+         */
+        "kpopLastSuccess": string;
+        /**
+         * 取得元ページの日付
+         */
+        "kpopSourceDate": string;
+        /**
+         * 取得元の集計日時で表示します。日間チャートの日付は位置の基準で、実際の公開時刻ではありません。欠損順位は補完せず、プレビューの不在を全体の圏外とは扱いません。
+         */
+        "kpopOfficialHistoryHint": string;
+        /**
+         * 完全な一覧に存在しません
+         */
+        "kpopNotListed": string;
+        /**
+         * 取得元がアクセス認証ページを返しました
+         */
+        "kpopChallenge": string;
+        /**
+         * 取得元の指定したアクセス間隔を待っています
+         */
+        "kpopCrawlDelay": string;
+        /**
+         * 取得元のアドレスを検証できません
+         */
+        "kpopUrlNotAllowed": string;
+        /**
+         * 取得元の制限
+         */
+        "kpopRestrictedShort": string;
+        /**
+         * {count}/{total}プレビュー
+         */
+        "kpopPreviewShort": ParameterizedString<"count" | "total">;
+        /**
+         * 上位{count}プレビュー
+         */
+        "kpopPreviewLimit": ParameterizedString<"count">;
+        /**
+         * 変動は配信元の表示です。NEW は配信元が新規ランクインと明記した場合のみ表示します。
+         */
+        "kpopMovementSource": string;
+        /**
+         * 変動は前回の比較可能な観測記録との比較です。間隔は必ずしも1時間ではありません。
+         */
+        "kpopMovementComparison": string;
+        /**
+         * 楽曲の記録
+         */
+        "kpopSongRecord": string;
+        /**
+         * 現在取得できるチャートにこの楽曲が見つからないため、現在の順位は確認できません。過去の記録は閲覧できます。
+         */
+        "kpopSongMissing": string;
+        /**
+         * 現在の楽曲情報を取得できません。過去の記録は閲覧できます。
+         */
+        "kpopSongLookupFailed": string;
+        /**
+         * チャート全体を見る
+         */
+        "kpopFullChart": string;
+        /**
+         * A2O LITE チャートモニター
+         */
+        "title": string;
+        /**
+         * NEON · 韓国の音源
+         */
+        "subtitle": string;
+        /**
+         * A2O LITE「NEON」のジャケット
+         */
+        "cover": string;
+        /**
+         * 推移を見る
+         */
+        "details": string;
+        /**
+         * 詳細
+         */
+        "compactDetails": string;
+        /**
+         * {name} · {scope}
+         */
+        "accessibleName": ParameterizedString<"name" | "scope">;
+        /**
+         * TOP{maxRank}
+         */
+        "chartRange": ParameterizedString<"maxRank">;
+        /**
+         * Melon 日間
+         */
+        "shortMelonDaily": string;
+        /**
+         * HOT100
+         */
+        "shortMelonHot100": string;
+        /**
+         * TOP100
+         */
+        "shortMelonTop100": string;
+        /**
+         * Genie 即時
+         */
+        "shortGenieRealtime": string;
+        /**
+         * Bugs 即時
+         */
+        "shortBugsRealtime": string;
+        /**
+         * #{rank}
+         */
+        "compactRank": ParameterizedString<"rank">;
+        /**
+         * 前回{result}
+         */
+        "compactPrevious": ParameterizedString<"result">;
+        /**
+         * 対象期間外
+         */
+        "compactOutOfScope": string;
+        /**
+         * 取得待ち
+         */
+        "compactPending": string;
+        /**
+         * 未接続
+         */
+        "compactRestricted": string;
+        /**
+         * 取得不可
+         */
+        "compactUnavailable": string;
+        /**
+         * 取得中
+         */
+        "compactLoading": string;
+        /**
+         * 参考{rank}位
+         */
+        "referenceRank": ParameterizedString<"rank">;
+        /**
+         * 参考一覧に見つかりません
+         */
+        "referenceNotFound": string;
+        /**
+         * 参考データ取得不可
+         */
+        "referenceUnavailable": string;
+        /**
+         * 参考の更新を休止中
+         */
+        "referencePaused": string;
+        /**
+         * 参考の更新を休止中（アクセス制限）
+         */
+        "referenceRestricted": string;
+        /**
+         * 参考データの期限切れ
+         */
+        "referenceStale": string;
+        /**
+         * 参考：ChartRadar
+         */
+        "referenceAttribution": string;
+        /**
+         * {result} · ChartRadar の第三者参考データ · {scope}
+         */
+        "referenceAccessible": ParameterizedString<"result" | "scope">;
+        /**
+         * 第三者の参考情報 · ChartRadar
+         */
+        "referenceTitle": string;
+        /**
+         * ChartRadar の参考チャートを見る
+         */
+        "referenceSource": string;
+        /**
+         * 参考の範囲
+         */
+        "referenceScope": string;
+        /**
+         * 第三者の上位100曲
+         */
+        "referenceTop100": string;
+        /**
+         * 第三者の上位200曲（公式リアルタイムTOP200の検証ではありません）
+         */
+        "referenceTop200": string;
+        /**
+         * 取得元の時刻表記（原文）
+         */
+        "referenceTimeLabel": string;
+        /**
+         * 取得元の取得日時（韓国時間）
+         */
+        "referenceFetchedAt": string;
+        /**
+         * 当サイトの確認日時（韓国時間）
+         */
+        "referenceCheckedAt": string;
+        /**
+         * 更新休止の理由
+         */
+        "referenceFailureReason": string;
+        /**
+         * 以前の失敗理由は記録されていません
+         */
+        "referenceFailureUnknown": string;
+        /**
+         * {phase}：{reason}
+         */
+        "referenceFailureDetail": ParameterizedString<"phase" | "reason">;
+        /**
+         * アクセス規則の確認
+         */
+        "failurePhaseRobots": string;
+        /**
+         * チャートページの取得
+         */
+        "failurePhasePage": string;
+        /**
+         * チャート内容の検証
+         */
+        "failurePhaseParse": string;
+        /**
+         * 取得元の規則により自動取得は禁止されています
+         */
+        "failureRobotsDenied": string;
+        /**
+         * 取得元のアクセス規則を確認できません
+         */
+        "failureRobotsInvalid": string;
+        /**
+         * 取得元が認証を要求しています（401）
+         */
+        "failureUnauthorized": string;
+        /**
+         * 取得元がアクセスを拒否しました（403）
+         */
+        "failureForbidden": string;
+        /**
+         * 取得元がリクエスト頻度を制限しています（429）
+         */
+        "failureRateLimited": string;
+        /**
+         * 取得がタイムアウトしました
+         */
+        "failureTimeout": string;
+        /**
+         * 取得元がリダイレクトを返しました
+         */
+        "failureRedirect": string;
+        /**
+         * 応答のコンテンツタイプが想定外です
+         */
+        "failureContentType": string;
+        /**
+         * チャート内容の検証に失敗しました
+         */
+        "failureInvalidPayload": string;
+        /**
+         * 取得元がエラー応答を返しました
+         */
+        "failureHttpError": string;
+        /**
+         * ネットワーク接続に失敗しました
+         */
+        "failureNetworkError": string;
+        /**
+         * 応答がサイズ制限を超えました
+         */
+        "failureTooLarge": string;
+        /**
+         * 再試行可能となる最も早い日時（韓国時間）
+         */
+        "referenceNextAttempt": string;
+        /**
+         * 再試行可能日時の記録なし
+         */
+        "referenceRetryUnknown": string;
+        /**
+         * 再取得が許可される最も早い日時です。実際の確認は毎時のタスクで行い、その時点での更新は保証しません。このページの再読み込みでは前倒ししません。
+         */
+        "referenceRetryHint": string;
+        /**
+         * 曲名とアーティスト名で照合した参考情報です。見つからない場合も公式の圏外を意味しません。公式の推移・変動・最高順位には含めません。取得元の時刻表記をそのまま表示し、提供されていない日付は補完しません。
+         */
+        "referenceHint": string;
+        /**
+         * 公式チャートのデータ
+         */
+        "officialData": string;
+        /**
+         * 取得状況
+         */
+        "sourceStatus": string;
+        /**
+         * 順位・結果
+         */
+        "currentResult": string;
+        /**
+         * 順位の変動
+         */
+        "change": string;
+        /**
+         * 更新失敗
+         */
+        "refreshFailed": string;
+        /**
+         * 前回取得した結果：{result}
+         */
+        "previousResult": ParameterizedString<"result">;
+        /**
+         * Melon デイリー
+         */
+        "melonDaily": string;
+        /**
+         * Melon TOP100
+         */
+        "melonTop100": string;
+        /**
+         * Melon HOT100
+         */
+        "melonHot100": string;
+        /**
+         * Genie MV 日間
+         */
+        "genieMvDaily": string;
+        /**
+         * Genie リアルタイム TOP200
+         */
+        "genieRealtime": string;
+        /**
+         * Bugs リアルタイム
+         */
+        "bugsRealtime": string;
+        /**
+         * HOT100 · 発売から100日以内
+         */
+        "hot100Scope": string;
+        /**
+         * —
+         */
+        "placeholder": string;
+        /**
+         * {rank}位
+         */
+        "rank": ParameterizedString<"rank">;
+        /**
+         * 圏外
+         */
+        "unranked": string;
+        /**
+         * 集計対象外
+         */
+        "outOfScope": string;
+        /**
+         * 最初の取得を待っています
+         */
+        "pending": string;
+        /**
+         * 公式の自動更新は未接続
+         */
+        "restricted": string;
+        /**
+         * 取得元を利用できません
+         */
+        "unavailable": string;
+        /**
+         * 更新済み
+         */
+        "updated": string;
+        /**
+         * 前回取得した結果
+         */
+        "lastResult": string;
+        /**
+         * 比較データなし
+         */
+        "noComparison": string;
+        /**
+         * 変動なし
+         */
+        "unchanged": string;
+        /**
+         * {count}位上昇
+         */
+        "rise": ParameterizedString<"count">;
+        /**
+         * {count}位下降
+         */
+        "fall": ParameterizedString<"count">;
+        /**
+         * 集計日時
+         */
+        "period": string;
+        /**
+         * 集計データはまだありません
+         */
+        "noPeriod": string;
+        /**
+         * 韓国時間（UTC+9）
+         */
+        "kst": string;
+        /**
+         * 公式チャートを見る
+         */
+        "official": string;
+        /**
+         * 更新できません。後ほど自動で再試行します。表示中のデータは前回の結果です。
+         */
+        "loadFailed": string;
+        /**
+         * 過去7日間の推移
+         */
+        "sevenDays": string;
+        /**
+         * 記録開始後の最高順位
+         */
+        "peak": string;
+        /**
+         * 記録開始
+         */
+        "monitorStarted": string;
+        /**
+         * 最終確認
+         */
+        "checkedAt": string;
+        /**
+         * 1時間ごとに更新
+         */
+        "hourlyUpdate": string;
+        /**
+         * 最後の取得成功日時（韓国時間）
+         */
+        "lastSuccessAt": string;
+        /**
+         * 取得成功の記録なし
+         */
+        "noSuccessfulRead": string;
+        /**
+         * 表示できる順位の記録はまだありません
+         */
+        "noHistory": string;
+        /**
+         * 実際に取得した時点から記録します。空白は圏外・未取得・集計対象外を示し、0位ではありません。
+         */
+        "historyHint": string;
+        /**
+         * 公式チャートの自動更新は未接続です。ChartRadar の参考更新とは別の状態です。公式チャートもご確認ください。
+         */
+        "sourceRestricted": string;
+        /**
+         * 取得元を一時的に更新できません。取得済みのデータは元の集計日時のまま表示します。
+         */
+        "sourceUnavailable": string;
+        /**
+         * 更新
+         */
+        "refresh": string;
+        /**
+         * チャートを読み込んでいます…
+         */
+        "loading": string;
+        /**
+         * 順位
+         */
+        "rankAxis": string;
+        /**
+         * 順位の記録を見る
+         */
+        "table": string;
+        /**
+         * 未取得
+         */
+        "missing": string;
+        /**
+         * 推移を読み込めません。再試行してください。
+         */
+        "historyFailed": string;
+        /**
+         * 公開前の順位は補完しません。
+         */
+        "noPastData": string;
+    };
+    "_androidApp": {
+        /**
+         * PUBO Android 版
+         */
+        "title": string;
+        /**
+         * Android 版をダウンロード
+         */
+        "download": string;
+        /**
+         * テスト版・実機での確認は未完了
+         */
+        "beta": string;
+        /**
+         * Android で PUBO のログイン、投稿、チャット、韓国ガールズグループ音楽チャートを利用できます。
+         */
+        "description": string;
+        /**
+         * バージョン
+         */
+        "version": string;
+        /**
+         * APK サイズ
+         */
+        "fileSize": string;
+        /**
+         * システム要件
+         */
+        "system": string;
+        /**
+         * Android 8.0 以上。インターネット接続と Android System WebView 130 以降が必要です。
+         */
+        "requirements": string;
+        /**
+         * インストール手順
+         */
+        "installTitle": string;
+        /**
+         * APK をダウンロードし、ファイルを開きます。
+         */
+        "installOne": string;
+        /**
+         * システムの案内に従い、使用中のブラウザーまたはファイル管理アプリからのインストールを許可して PUBO をインストールします。
+         */
+        "installTwo": string;
+        /**
+         * PUBO を開いてログインします。更新時はこのページから新しい版をダウンロードして上書きインストールします。
+         */
+        "installThree": string;
+        /**
+         * 初期版について
+         */
+        "limitationsTitle": string;
+        /**
+         * パスワード、SMS 関連の認証手順、ワンタイム認証コードに対応します。パスキーとネイティブのバックグラウンド通知は未対応です。アプリ終了後の通知には依存しないでください。
+         */
+        "limitations": string;
+        /**
+         * データと権限
+         */
+        "privacyTitle": string;
+        /**
+         * アプリは bolubo.com を読み込み、ログイン状態を端末内に保持します。カメラとマイクの権限は使用時だけ要求します。ファイルはシステムの選択画面で読み書きし、SMS の読み取りや全ストレージ権限は要求しません。チャット添付は引き続きサーバーで認可され、ログイントークンをネイティブの保存機能に渡しません。
+         */
+        "privacy": string;
+        /**
+         * サイトのプライバシーポリシー
+         */
+        "privacyLink": string;
+        /**
+         * Android ソースコードをダウンロード
+         */
+        "source": string;
+        /**
+         * SHA-256 チェックサム
+         */
+        "checksum": string;
+        /**
+         * インストールファイルを準備中
+         */
+        "preparing": string;
+        /**
+         * ファイルを保存しました
+         */
+        "saved": string;
+        /**
+         * 別のファイルを保存しています。完了後に再試行してください。
+         */
+        "saveBusy": string;
+        /**
+         * 保存がタイムアウトしました。保存先をもう一度選択してください。
+         */
+        "saveTimeout": string;
+        /**
+         * 保存できませんでした。空き容量と保存先を確認して再試行してください。
+         */
+        "saveFailed": string;
+        /**
+         * 安全な保存に対応していません。Android System WebView を更新してください。
+         */
+        "updateWebView": string;
+    };
+    "_homeAnnouncements": {
+        /**
+         * サーバーのお知らせ
+         */
+        "label": string;
+        /**
+         * ホームのスクロールお知らせ
+         */
+        "display": string;
+        /**
+         * スクロールを一時停止
+         */
+        "pause": string;
+        /**
+         * スクロールを再開
+         */
+        "resume": string;
+        /**
+         * 編集
+         */
+        "edit": string;
+        /**
+         * 編集するお知らせを選択
+         */
+        "select": string;
+        /**
+         * お知らせを読み込めませんでした。再試行してください。
+         */
+        "loadFailed": string;
+        /**
+         * 保存を確認できませんでした。入力内容を保持しています。再試行してください。
+         */
+        "saveFailed": string;
+        /**
+         * このお知らせは終了、削除、またはホーム表示から変更されています。閉じて再確認してください。
+         */
+        "unavailable": string;
+        /**
+         * ほかの管理者が変更しました。最新の内容を読み込み直してから編集してください。
+         */
+        "changed": string;
+        /**
+         * 最新の内容を読み込む
+         */
+        "reload": string;
+        /**
+         * ログイン中のホームとゲストのホームに、終了または削除するまで表示します。全ユーザーが対象で、既読後も表示されます。未読通知やダイアログは表示せず、既読確認も不要です。スクロール欄にはタイトルだけを表示し、クリックすると本文と画像を確認できます。
+         */
+        "adminDescription": string;
+    };
+    "_snakeGame": {
+        /**
+         * PUBO オンラインスネーク
+         */
+        "title": string;
+        /**
+         * オンラインのプレイヤーと競い、光を食べてヘビを育てよう。
+         */
+        "description": string;
+        /**
+         * すべてのゲーム
+         */
+        "allGames": string;
+        /**
+         * このゲームは現在利用できません。
+         */
+        "unavailable": string;
+        /**
+         * PUBO にログインすると参加できます。追加の登録は不要です。
+         */
+        "signin": string;
+        /**
+         * プレイヤー
+         */
+        "humans": string;
+        /**
+         * コンピューター
+         */
+        "computers": string;
+        /**
+         * コンピューター
+         */
+        "computer": string;
+        /**
+         * スコア
+         */
+        "score": string;
+        /**
+         * アリーナのランキング
+         */
+        "ranking": string;
+        /**
+         * 参加するとランキングが表示されます。
+         */
+        "waiting": string;
+        /**
+         * PC: マウスで方向を操作し、スペースまたは左ボタンを押し続けて加速。スマートフォン: ゲーム画面をドラッグして方向を操作し、加速ボタンを押し続けます。
+         */
+        "controls": string;
+        /**
+         * マップの端は反対側につながっています。他のヘビの体にぶつかると終了します。加速すると長さを消費します。コンピューターは明示され、人間のプレイヤーは最大20人です。
+         */
+        "rules": string;
+        /**
+         * 加速
+         */
+        "boost": string;
+        /**
+         * アリーナに参加しますか？
+         */
+        "ready": string;
+        /**
+         * アリーナに接続中…
+         */
+        "connecting": string;
+        /**
+         * プレイ中
+         */
+        "playing": string;
+        /**
+         * ゲーム終了
+         */
+        "gameOver": string;
+        /**
+         * 接続が切断され、このゲームは終了しました
+         */
+        "disconnected": string;
+        /**
+         * アリーナに参加できません
+         */
+        "failed": string;
+        /**
+         * もう一度参加
+         */
+        "playAgain": string;
+        /**
+         * アリーナが満員です。しばらくしてから再試行してください。
+         */
+        "full": string;
+        /**
+         * このアカウントは別の場所でプレイ中です。先に退出してください。
+         */
+        "duplicate": string;
+        /**
+         * 参加チケットが無効です。しばらく待ってから再参加してください。
+         */
+        "ticketExpired": string;
+        /**
+         * 接続できません。ネットワークを確認して再参加してください。
+         */
+        "retry": string;
     };
 }

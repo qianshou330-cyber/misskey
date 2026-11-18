@@ -91,6 +91,13 @@ export class MiUserProfile {
 	})
 	public emailVerified: boolean;
 
+	/** Normalized mainland China phone number (kept private). */
+	@Column('varchar', { length: 32, nullable: true })
+	public phoneNumber: string | null;
+
+	@Column('boolean', { default: false })
+	public phoneVerified: boolean;
+
 	@Column('jsonb', {
 		default: ['follow', 'receiveFollowRequest'],
 	})

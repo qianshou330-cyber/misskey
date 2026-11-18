@@ -1,0 +1,14 @@
+Socket.IO client, version 4.8.3, MIT license.
+Upstream: https://github.com/socketio/socket.io/tree/main/packages/socket.io-client
+Package: https://registry.npmjs.org/socket.io-client/-/socket.io-client-4.8.3.tgz
+Copied unmodified from the pinned snake service npm dependency installation.
+
+socket.io-client-4.8.3.esm.min.js
+SHA256 72a57408c85583436488d4dc29231cbb9b805b6e9bec8c7a73a43ff7f21f6c95
+
+socket.io-client-LICENSE
+SHA256 73cb68c437d59e066f9386ef97be57298df4db119fdbd7d7150817c6dbd9f189
+
+Imported with Vite ?url, then loaded from the resulting same-origin hashed asset.
+No external CDN, page script, analytics, or service worker is loaded.
+The PUBO canvas renderer and client adapter are original code; this bundle is transport only.

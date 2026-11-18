@@ -19,8 +19,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 				<div><MkCondensedLine :minScale="2 / 3">{{ acct }}</MkCondensedLine></div>
 			</div>
 		</div>
-		<img v-if="deviceMotionPermissionNeeded" v-flip :class="$style.logo" :src="misskeysvg" alt="Misskey Logo" @click="requestDeviceMotion"/>
-		<img v-else v-flip :class="$style.logo" :src="misskeysvg" alt="Misskey Logo"/>
+		<img v-if="deviceMotionPermissionNeeded" v-flip :class="$style.logo" :src="puboLogo" alt="PUBO Logo" @click="requestDeviceMotion"/>
+		<img v-else v-flip :class="$style.logo" :src="puboLogo" alt="PUBO Logo"/>
 	</div>
 </div>
 </template>
@@ -34,7 +34,7 @@ import type { Directive } from 'vue';
 import { instance } from '@/instance.js';
 import { ensureSignin } from '@/i.js';
 import { userPage, userName } from '@/filters/user.js';
-import misskeysvg from '/client-assets/misskey.svg';
+import puboLogo from '/client-assets/pubo-logo.png';
 import { getStaticImageUrl } from '@/utility/media-proxy.js';
 import { i18n } from '@/i18n.js';
 
@@ -65,7 +65,7 @@ const qrCodeInstance = new QRCodeStyling({
 	margin: 42,
 	type: 'canvas',
 	data: `${url}/users/${$i.id}`,
-	image: instance.iconUrl ? getStaticImageUrl(instance.iconUrl) : '/favicon.ico',
+	image: instance.iconUrl ? getStaticImageUrl(instance.iconUrl) : '/favicon.ico?brand=pubo',
 	qrOptions: {
 		typeNumber: 0,
 		mode: 'Byte',

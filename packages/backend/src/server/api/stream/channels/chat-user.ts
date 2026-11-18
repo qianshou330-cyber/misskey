@@ -33,6 +33,7 @@ export class ChatUserChannel extends Channel {
 		if (typeof params.otherId !== 'string') return false;
 		if (!this.user) return false;
 		if (params.otherId === this.user.id) return false;
+		if (!await this.chatService.canReadChatStream(this.user, this.connection.token)) return false;
 
 		this.otherId = params.otherId;
 
@@ -43,15 +44,18 @@ export class ChatUserChannel extends Channel {
 
 	@bindThis
 	private async onEvent(data: GlobalEvents['chatUser']['payload']) {
+		if (!this.user || !await this.chatService.canReadChatStream(this.user, this.connection.token)) return;
 		this.send(data.type, data.body);
 	}
 
 	@bindThis
-	public onMessage(type: string, body: any) {
+	public async onMessage(type: string, body: any) {
+		if (!this.user || !await this.chatService.canReadChatStream(this.user, this.connection.token)) return;
 		switch (type) {
 			case 'read':
 				if (this.otherId) {
-					this.chatService.readUserChatMessage(this.user!.id, this.otherId);
+					// Legacy clients acknowledge notification badges, never actual reading.
+					await this.chatService.readUserChatMessage(this.user!.id, this.otherId);
 				}
 				break;
 		}

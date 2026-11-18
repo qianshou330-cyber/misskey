@@ -14,6 +14,9 @@ import { IdService } from '@/core/IdService.js';
 import { UserEntityService } from './UserEntityService.js';
 import { DriveFileEntityService } from './DriveFileEntityService.js';
 import { In } from 'typeorm';
+import { packChatMessageState } from '@/core/chat-message-state.js';
+import { ChatAttachmentService } from '@/core/ChatAttachmentService.js';
+import { packChatReply, samePrivateConversation } from '@/core/chat-reply.js';
 
 @Injectable()
 export class ChatEntityService {
@@ -33,7 +36,22 @@ export class ChatEntityService {
 		private userEntityService: UserEntityService,
 		private driveFileEntityService: DriveFileEntityService,
 		private idService: IdService,
+		private chatAttachmentService: ChatAttachmentService,
 	) {
+	}
+
+	/** Only one level, and only the outer message's exact private pair. */
+	private async packReply(message: MiChatMessage, viewerId?: string) {
+		if (!message.toUserId || !message.replyToId) return { replyToId: null, replyTo: null };
+		const target = await this.chatMessagesRepository.findOneBy({ id: message.replyToId });
+		if (!target || !samePrivateConversation(target, message.fromUserId, message.toUserId)
+			|| (viewerId != null && viewerId !== message.fromUserId && viewerId !== message.toUserId)) {
+			return { replyToId: message.replyToId, replyTo: packChatReply(message.replyToId, null) };
+		}
+		// The attachment serializer already excludes revoked/unavailable blobs.
+		// Keep only kinds, never names, download URLs or nested message content.
+		const attachments = target.recalledAt ? [] : await this.chatAttachmentService.packForMessage(target.id);
+		return { replyToId: message.replyToId, replyTo: packChatReply(target.id, target, attachments.map(attachment => attachment.kind)) };
 	}
 
 	@bindThis
@@ -53,6 +71,8 @@ export class ChatEntityService {
 		const packedRooms = options?._hint_?.packedRooms;
 
 		const message = typeof src === 'object' ? src : await this.chatMessagesRepository.findOneByOrFail({ id: src });
+		const attachments = message.toUserId && !message.recalledAt ? await this.chatAttachmentService.packForMessage(message.id) : [];
+		const privateAttachmentFallback = Boolean(message.toUserId && !message.recalledAt && !message.text && (attachments.length || message.fileId));
 
 		// userは削除されている可能性があるのでnull許容
 		const reactions: { user: Packed<'UserLite'> | null; reaction: string; }[] = [];
@@ -66,17 +86,21 @@ export class ChatEntityService {
 		}
 
 		return {
+			...packChatMessageState(message),
+			...await this.packReply(message, me?.id),
+			attachments,
+			privateAttachmentFallback,
 			id: message.id,
 			createdAt: this.idService.parse(message.id).date.toISOString(),
-			text: message.text,
+			text: message.recalledAt ? null : privateAttachmentFallback ? 'Private attachment. Update your client to view it.' : message.text,
 			fromUserId: message.fromUserId,
 			fromUser: packedUsers?.get(message.fromUserId) ?? (await this.userEntityService.pack(message.fromUser ?? message.fromUserId, me)),
 			toUserId: message.toUserId,
 			toUser: message.toUserId ? (packedUsers?.get(message.toUserId) ?? (await this.userEntityService.pack(message.toUser ?? message.toUserId, me))) : undefined,
 			toRoomId: message.toRoomId,
 			toRoom: message.toRoomId ? (packedRooms?.get(message.toRoomId) ?? (await this.packRoom(message.toRoom ?? message.toRoomId, me))) : undefined,
-			fileId: message.fileId,
-			file: message.fileId ? (packedFiles?.get(message.fileId) ?? (await this.driveFileEntityService.pack(message.file ?? message.fileId))) : null,
+			fileId: message.toUserId ? null : message.fileId,
+			file: !message.toUserId && message.fileId ? (packedFiles?.get(message.fileId) ?? (await this.driveFileEntityService.pack(message.file ?? message.fileId))) : null,
 			reactions: reactions.filter((r): r is { user: Packed<'UserLite'>; reaction: string; } => r.user != null),
 		};
 	}
@@ -131,9 +155,9 @@ export class ChatEntityService {
 			};
 		},
 	): Promise<Packed<'ChatMessageLiteFor1on1'>> {
-		const packedFiles = options?._hint_?.packedFiles;
-
 		const message = typeof src === 'object' ? src : await this.chatMessagesRepository.findOneByOrFail({ id: src });
+		const attachments = message.recalledAt ? [] : await this.chatAttachmentService.packForMessage(message.id);
+		const privateAttachmentFallback = Boolean(!message.recalledAt && !message.text && (attachments.length || message.fileId));
 
 		const reactions: { reaction: string; }[] = [];
 
@@ -145,13 +169,17 @@ export class ChatEntityService {
 		}
 
 		return {
+			...packChatMessageState(message),
+			...await this.packReply(message),
+			attachments,
+			privateAttachmentFallback,
 			id: message.id,
 			createdAt: this.idService.parse(message.id).date.toISOString(),
-			text: message.text,
+			text: message.recalledAt ? null : privateAttachmentFallback ? 'Private attachment. Update your client to view it.' : message.text,
 			fromUserId: message.fromUserId,
 			toUserId: message.toUserId!,
-			fileId: message.fileId,
-			file: message.fileId ? (packedFiles?.get(message.fileId) ?? (await this.driveFileEntityService.pack(message.file ?? message.fileId))) : null,
+			fileId: null,
+			file: null,
 			reactions,
 		};
 	}

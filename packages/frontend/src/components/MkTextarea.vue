@@ -13,6 +13,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 			v-adaptive-border
 			:class="[$style.textarea, { _monospace: code }]"
 			:disabled="disabled"
+			:aria-label="ariaLabel"
 			:required="required"
 			:readonly="readonly"
 			:placeholder="placeholder"
@@ -48,6 +49,7 @@ const props = defineProps<{
 	required?: boolean;
 	readonly?: boolean;
 	disabled?: boolean;
+	ariaLabel?: string;
 	pattern?: string;
 	placeholder?: string;
 	autofocus?: boolean;

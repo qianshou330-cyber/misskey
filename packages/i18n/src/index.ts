@@ -8,8 +8,15 @@
  */
 
 import * as fs from 'node:fs';
-import * as yaml from 'js-yaml';
+import { load as loadYaml } from 'js-yaml';
 import { languages, primaries } from './const.js';
+import { puboVerificationZhCN } from './pubo-verification-zh-cn.js';
+import { puboChatZhCN } from './pubo-chat-zh-cn.js';
+import { puboMusicChartsZhCN } from './pubo-music-charts-zh-cn.js';
+import { puboAndroidZhCN } from './pubo-android-zh-cn.js';
+import { puboChatDailyZhCN } from './pubo-chat-daily-zh-cn.js';
+import { puboHomeAnnouncementsZhCN } from './pubo-home-announcements-zh-cn.js';
+import { puboSnakeZhCN } from './pubo-snake-zh-cn.js';
 import type { Locale } from './autogen/locale.js';
 import type { ILocale, ParameterizedString } from './types.js';
 
@@ -62,7 +69,7 @@ function build(): Record<Language, Locale> {
 	// https://github.com/misskey-dev/misskey/pull/14057#issuecomment-2192833785
 	const metaUrl = import.meta.url;
 	const locales = languages.reduce<Locales>((a, lang) => {
-		a[lang] = (yaml.load(clean(fs.readFileSync(new URL(`./locales/${lang}.yml`, metaUrl), 'utf-8'))) ?? {}) as ILocale;
+		a[lang] = (loadYaml(clean(fs.readFileSync(new URL(`./locales/${lang}.yml`, metaUrl), 'utf-8'))) ?? {}) as ILocale;
 		return a;
 	}, {} as Locales);
 
@@ -91,6 +98,11 @@ function build(): Record<Language, Locale> {
 				);
 				break;
 			}
+		}
+
+		// Keep PUBO-specific translations separate from Crowdin-managed locales.
+		if (key === 'zh-CN') {
+			a[key] = merge<Locale>(a[key], { _verification: puboVerificationZhCN, _chatPro: puboChatZhCN, _chatDaily: puboChatDailyZhCN, _musicCharts: puboMusicChartsZhCN, _androidApp: puboAndroidZhCN, _homeAnnouncements: puboHomeAnnouncementsZhCN, _snakeGame: puboSnakeZhCN });
 		}
 
 		return a;

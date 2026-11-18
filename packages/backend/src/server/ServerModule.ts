@@ -8,6 +8,7 @@ import { EndpointsModule } from '@/server/api/EndpointsModule.js';
 import { CoreModule } from '@/core/CoreModule.js';
 import { ApiCallService } from './api/ApiCallService.js';
 import { FileServerService } from './FileServerService.js';
+import { ChatAttachmentServerService } from './ChatAttachmentServerService.js';
 import { HealthServerService } from './HealthServerService.js';
 import { NodeinfoServerService } from './NodeinfoServerService.js';
 import { ServerService } from './ServerService.js';
@@ -37,6 +38,7 @@ import { AntennaChannel } from './api/stream/channels/antenna.js';
 import { ChannelChannel } from './api/stream/channels/channel.js';
 import { DriveChannel } from './api/stream/channels/drive.js';
 import { GlobalTimelineChannel } from './api/stream/channels/global-timeline.js';
+import { TopicTimelineChannel } from './api/stream/channels/topic-timeline.js';
 import { HashtagChannel } from './api/stream/channels/hashtag.js';
 import { HomeTimelineChannel } from './api/stream/channels/home-timeline.js';
 import { HybridTimelineChannel } from './api/stream/channels/hybrid-timeline.js';
@@ -66,6 +68,7 @@ import { SigninWithPasskeyApiService } from './api/SigninWithPasskeyApiService.j
 		UrlPreviewService,
 		ActivityPubServerService,
 		FileServerService,
+		ChatAttachmentServerService,
 		NodeinfoServerService,
 		ServerService,
 		WellKnownServerService,
@@ -87,6 +90,7 @@ import { SigninWithPasskeyApiService } from './api/SigninWithPasskeyApiService.j
 		ChannelChannel,
 		DriveChannel,
 		GlobalTimelineChannel,
+		TopicTimelineChannel,
 		HashtagChannel,
 		RoleTimelineChannel,
 		ChatUserChannel,

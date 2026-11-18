@@ -35,16 +35,16 @@ export function BaseEmbed(props: PropsWithChildren<CommonProps<{
 			<html>
 				<head>
 					<meta charset="UTF-8" />
-					<meta name="application-name" content={props.instanceName || 'NexusHub'} />
+					<meta name="application-name" content="PUBO" />
 					<meta name="referer" content="origin" />
 					<meta name="theme-color" content={props.themeColor ?? '#86b300'} />
 					<meta name="theme-color-orig" content={props.themeColor ?? '#86b300'} />
-					<meta property="og:site_name" content={props.instanceName || 'NexusHub'} />
+					<meta property="og:site_name" content={props.instanceName || 'PUBO'} />
 					<meta property="instance_url" content={props.instanceUrl} />
 					<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
 					<meta name="format-detection" content="telephone=no,date=no,address=no,email=no,url=no" />
-					<link rel="icon" href={props.icon ?? '/favicon.ico'} />
-					<link rel="apple-touch-icon" href={props.appleTouchIcon ?? '/apple-touch-icon.png'} />
+					<link rel="icon" href={props.icon ?? '/favicon.ico?brand=pubo'} />
+					<link rel="apple-touch-icon" href={props.appleTouchIcon ?? '/apple-touch-icon.png?brand=pubo'} />
 
 					{props.frontendEmbedViteFiles == null ? <script type="module" src="/embed_vite/@vite/client"></script> : null}
 
@@ -52,7 +52,7 @@ export function BaseEmbed(props: PropsWithChildren<CommonProps<{
 						<link rel="stylesheet" href={`/embed_vite/${href}`} />
 					))}
 
-					{props.titleSlot ?? <title safe>{props.title || 'NexusHub'}</title>}
+					{props.titleSlot ?? <title safe>{props.title || 'PUBO'}</title>}
 
 					{props.metaSlot}
 

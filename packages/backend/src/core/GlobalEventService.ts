@@ -70,6 +70,7 @@ export interface MainEventTypes {
 	unreadNotification: Packed<'Notification'>;
 	unreadAntenna: MiAntenna;
 	newChatMessage: Packed<'ChatMessage'>;
+	chatStateChanged: { userId: MiUser['id'] | null };
 	readAllAnnouncements: undefined;
 	myTokenRegenerated: undefined;
 	signin: {
@@ -160,6 +161,9 @@ export interface AdminEventTypes {
 
 export interface ChatEventTypes {
 	message: Packed<'ChatMessageLite'>;
+	updated: Packed<'ChatMessageLiteFor1on1'>;
+	recalled: Packed<'ChatMessageLiteFor1on1'>;
+	read: { messages: Packed<'ChatMessageLiteFor1on1'>[] };
 	deleted: Packed<'ChatMessageLite'>['id'];
 	react: {
 		reaction: string;
@@ -263,7 +267,7 @@ export interface InternalEventTypes {
 	userListMemberRemoved: { userListId: MiUserList['id']; memberId: MiUser['id']; };
 }
 
-type EventTypesToEventPayload<T> = EventUnionFromDictionary<UndefinedAsNullAll<SerializedAll<T>>>;
+export type EventTypesToEventPayload<T> = EventUnionFromDictionary<UndefinedAsNullAll<SerializedAll<T>>>;
 
 // name/messages(spec) pairs dictionary
 export type GlobalEvents = {

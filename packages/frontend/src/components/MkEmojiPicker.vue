@@ -86,14 +86,14 @@ SPDX-License-Identifier: AGPL-3.0-only
 				</div>
 			</section>
 		</div>
-		<div v-once class="group">
+		<div class="group">
 			<header class="_acrylic">{{ i18n.ts.customEmojis }}</header>
 			<XSection
 				v-for="child in customEmojiFolderRoot.children"
 				:key="`custom:${child.value}`"
 				:initialShown="false"
 				:emojis="computed(() => customEmojis.filter(e => filterCategory(e, child.value)).map(e => `:${e.name}:`))"
-				:disabledEmojis="computed(() => customEmojis.filter(e => filterCategory(e, child.value)).filter(e => !canReact(e)).map(e => `:${e.name}:`))"
+				:disabledEmojis="disabledCustomEmojis"
 				:hasChildSection="child.children.length !== 0"
 				:customEmojiTree="child.children"
 				@chosen="chosen"
@@ -189,7 +189,7 @@ const searchResultCustom = ref<Misskey.entities.EmojiSimple[]>([]);
 const searchResultUnicode = ref<UnicodeEmojiDef[]>([]);
 const tab = ref<'index' | 'custom' | 'unicode' | 'tags'>('index');
 
-const customEmojiFolderRoot: CustomEmojiFolderTree = { value: '', category: '', children: [] };
+const disabledCustomEmojis = computed(() => customEmojis.value.filter(e => !canReact(e)).map(e => `:${e.name}:`));
 
 function parseAndMergeCategories(input: string, root: CustomEmojiFolderTree): CustomEmojiFolderTree {
 	const parts = input.split('/').map(p => p.trim());
@@ -210,15 +210,16 @@ function parseAndMergeCategories(input: string, root: CustomEmojiFolderTree): Cu
 	return currentNode;
 }
 
-customEmojiCategories.value.forEach(ec => {
-	if (ec !== null) {
-		parseAndMergeCategories(ec, customEmojiFolderRoot);
+const customEmojiFolderRoot = computed(() => {
+	const root: CustomEmojiFolderTree = { value: '', category: '', children: [] };
+	for (const category of customEmojiCategories.value) {
+		if (category !== null) parseAndMergeCategories(category, root);
 	}
+	parseAndMergeCategories('', root);
+	return root;
 });
 
-parseAndMergeCategories('', customEmojiFolderRoot);
-
-watch(q, () => {
+watch([q, customEmojis], () => {
 	if (emojisEl.value) emojisEl.value.scrollTop = 0;
 
 	if (q.value === '') {
@@ -376,7 +377,12 @@ watch(q, () => {
 });
 
 function canReact(emoji: Misskey.entities.EmojiSimple | UnicodeEmojiDef | string): boolean {
-	return !props.targetNote || checkReactionPermissions($i!, props.targetNote, emoji);
+	if (typeof emoji === 'string' && emoji.startsWith(':')) {
+		const custom = customEmojisMap.get(emoji.replaceAll(':', ''));
+		if (!custom) return false;
+		emoji = custom;
+	}
+	return !props.targetNote || ($i != null && checkReactionPermissions($i, props.targetNote, emoji));
 }
 
 function filterCategory(emoji: Misskey.entities.EmojiSimple, category: string): boolean {
@@ -419,6 +425,7 @@ function computeButtonTitle(ev: PointerEvent): void {
 }
 
 function chosen(emoji: string | Misskey.entities.EmojiSimple | UnicodeEmojiDef, ev?: PointerEvent) {
+	if (!canReact(emoji)) return;
 	const el = ev && (ev.currentTarget ?? ev.target) as HTMLElement | null | undefined;
 	if (el && prefer.s.animation) {
 		const rect = el.getBoundingClientRect();

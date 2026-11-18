@@ -142,6 +142,7 @@ export class ApiServerService {
 		}>('/signin-with-passkey', (request, reply) => this.signinWithPasskeyApiService.signin(request, reply));
 
 		fastify.post<{ Body: { code: string; } }>('/signup-pending', (request, reply) => this.signupApiService.signupPending(request, reply));
+		fastify.post<{ Body: { phoneNumber: string } }>('/signup/request-phone-code', (request, reply) => this.signupApiService.requestPhoneCode(request, reply));
 
 		fastify.get('/v1/instance/peers', async (request, reply) => {
 			const instances = await this.instancesRepository.find({

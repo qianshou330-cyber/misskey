@@ -7,6 +7,7 @@ export const packedMetaLiteSchema = {
 	type: 'object',
 	optional: false, nullable: false,
 	properties: {
+		nativePushAvailable: { type: 'boolean', optional: false, nullable: false, default: false },
 		maintainerName: {
 			type: 'string',
 			optional: false, nullable: true,
@@ -73,6 +74,10 @@ export const packedMetaLiteSchema = {
 		},
 		clientOptions: {
 			ref: 'MetaClientOptions',
+		},
+		snakeGameEnabled: {
+			type: 'boolean',
+			optional: false, nullable: false,
 		},
 		disableRegistration: {
 			type: 'boolean',

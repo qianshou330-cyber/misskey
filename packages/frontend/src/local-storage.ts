@@ -15,6 +15,7 @@ export type Keys = (
 	'modifiedVersionMustProminentlyOfferInAgplV3Section13Read' |
 	'lastUsed' |
 	'lang' |
+	'puboDefaultLanguageVersion' |
 	'drafts' |
 	'hashtags' |
 	'colorScheme' |
@@ -28,6 +29,7 @@ export type Keys = (
 	'themeCachedVersion' |
 	'customCss' |
 	'chatMessageDrafts' |
+	'chatProMessageDrafts' |
 	'scratchpad' |
 	'debug' |
 	'preferences' |

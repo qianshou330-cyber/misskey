@@ -4,87 +4,87 @@ SPDX-License-Identifier: AGPL-3.0-only
 -->
 
 <template>
-<PageWithHeader v-model:tab="tab" :reversed="tab === 'chat'" :tabs="headerTabs" :actions="headerActions">
-	<div v-if="tab === 'chat'" class="_spacer" style="--MI_SPACER-w: 700px;">
-		<div class="_gaps">
-			<div v-if="initializing">
-				<MkLoading/>
-			</div>
-
-			<div v-else-if="messages.length === 0">
-				<div class="_gaps" style="text-align: center;">
-					<div>{{ i18n.ts._chat.noMessagesYet }}</div>
-					<template v-if="user">
-						<div v-if="user.chatScope === 'followers'">{{ i18n.ts._chat.thisUserAllowsChatOnlyFromFollowers }}</div>
-						<div v-else-if="user.chatScope === 'following'">{{ i18n.ts._chat.thisUserAllowsChatOnlyFromFollowing }}</div>
-						<div v-else-if="user.chatScope === 'mutual'">{{ i18n.ts._chat.thisUserAllowsChatOnlyFromMutualFollowing }}</div>
-						<div v-else-if="user.chatScope === 'none'">{{ i18n.ts._chat.thisUserNotAllowedChatAnyone }}</div>
-					</template>
-					<template v-else-if="room">
-						<div>{{ i18n.ts._chat.inviteUserToChat }}</div>
-					</template>
-				</div>
-			</div>
-
-			<div v-else ref="timelineEl" class="_gaps">
-				<div v-if="canFetchMore">
-					<MkButton :class="$style.more" :wait="moreFetching" primary rounded @click="fetchMore">{{ i18n.ts.loadMore }}</MkButton>
-				</div>
-
-				<TransitionGroup
-					:enterActiveClass="prefer.s.animation ? $style.transition_x_enterActive : ''"
-					:leaveActiveClass="prefer.s.animation ? $style.transition_x_leaveActive : ''"
-					:enterFromClass="prefer.s.animation ? $style.transition_x_enterFrom : ''"
-					:leaveToClass="prefer.s.animation ? $style.transition_x_leaveTo : ''"
-					:moveClass="prefer.s.animation ? $style.transition_x_move : ''"
-					tag="div" class="_gaps"
-				>
-					<template v-for="item in timeline.toReversed()" :key="item.id">
-						<XMessage v-if="item.type === 'item'" :message="item.data"/>
-						<div v-else-if="item.type === 'date'" :class="$style.dateDivider">
-							<span><i class="ti ti-chevron-up"></i> {{ item.nextText }}</span>
-							<span style="height: 1em; width: 1px; background: var(--MI_THEME-divider);"></span>
-							<span>{{ item.prevText }} <i class="ti ti-chevron-down"></i></span>
-						</div>
-					</template>
-				</TransitionGroup>
-			</div>
-
-			<div v-if="user && (!user.canChat || user.host !== null)">
-				<MkInfo warn>{{ i18n.ts._chat.chatNotAvailableInOtherAccount }}</MkInfo>
-			</div>
-
-			<MkInfo v-if="$i.policies.chatAvailability !== 'available'" warn>{{ $i.policies.chatAvailability === 'readonly' ? i18n.ts._chat.chatIsReadOnlyForThisAccountOrServer : i18n.ts._chat.chatNotAvailableForThisAccountOrServer }}</MkInfo>
-		</div>
-	</div>
-
-	<div v-else-if="tab === 'search'" class="_spacer" style="--MI_SPACER-w: 700px;">
-		<XSearch :userId="userId" :roomId="roomId"/>
-	</div>
-
-	<div v-else-if="tab === 'members'" class="_spacer" style="--MI_SPACER-w: 700px;">
-		<XMembers v-if="room != null" :room="room" @inviteUser="inviteUser"/>
-	</div>
-
-	<div v-else-if="tab === 'info'" class="_spacer" style="--MI_SPACER-w: 700px;">
-		<XInfo v-if="room != null" :room="room"/>
-	</div>
-
-	<template #footer>
-		<div v-if="tab === 'chat'" :class="$style.footer">
+<div :class="$style.root">
+	<PageWithHeader v-model:tab="tab" :class="$style.conversation" :reversed="tab === 'chat'" :tabs="headerTabs" :leadingActions="headerLeadingActions" :actions="headerActions">
+		<div v-if="tab === 'chat'" class="_spacer" style="--MI_SPACER-w: 700px;">
 			<div class="_gaps">
-				<Transition name="fade">
-					<div v-show="showIndicator" :class="$style.new">
-						<button class="_buttonPrimary" :class="$style.newButton" @click="onIndicatorClick">
-							<i class="fas ti-fw fa-arrow-circle-down" :class="$style.newIcon"></i>{{ i18n.ts._chat.newMessage }}
-						</button>
+				<div v-if="initializing">
+					<MkLoading/>
+				</div>
+
+				<div v-else-if="messages.length === 0">
+					<div class="_gaps" style="text-align: center;">
+						<div>{{ i18n.ts._chat.noMessagesYet }}</div>
+						<template v-if="user">
+							<div v-if="user.chatScope === 'followers'">{{ i18n.ts._chat.thisUserAllowsChatOnlyFromFollowers }}</div>
+							<div v-else-if="user.chatScope === 'following'">{{ i18n.ts._chat.thisUserAllowsChatOnlyFromFollowing }}</div>
+							<div v-else-if="user.chatScope === 'mutual'">{{ i18n.ts._chat.thisUserAllowsChatOnlyFromMutualFollowing }}</div>
+							<div v-else-if="user.chatScope === 'none'">{{ i18n.ts._chat.thisUserNotAllowedChatAnyone }}</div>
+						</template>
+						<template v-else-if="room">
+							<div>{{ i18n.ts._chat.inviteUserToChat }}</div>
+						</template>
 					</div>
-				</Transition>
-				<XForm v-if="initialized" :user="user" :room="room" :class="$style.form"/>
+				</div>
+
+				<div v-else ref="timelineEl" class="_gaps">
+					<div v-if="canFetchMore">
+						<MkButton :class="$style.more" :wait="moreFetching" primary rounded @click="fetchMore">{{ i18n.ts.loadMore }}</MkButton>
+					</div>
+
+					<TransitionGroup
+						:enterActiveClass="prefer.s.animation ? $style.transition_x_enterActive : ''"
+						:leaveActiveClass="prefer.s.animation ? $style.transition_x_leaveActive : ''"
+						:enterFromClass="prefer.s.animation ? $style.transition_x_enterFrom : ''"
+						:leaveToClass="prefer.s.animation ? $style.transition_x_leaveTo : ''"
+						:moveClass="prefer.s.animation ? $style.transition_x_move : ''"
+						tag="div" class="_gaps"
+					>
+						<template v-for="item in timeline.toReversed()" :key="item.id">
+							<XMessage v-if="item.type === 'item'" :message="item.data"/>
+							<div v-else-if="item.type === 'date'" :class="$style.dateDivider">
+								<span><i class="ti ti-chevron-up"></i> {{ item.nextText }}</span>
+								<span style="height: 1em; width: 1px; background: var(--MI_THEME-divider);"></span>
+								<span>{{ item.prevText }} <i class="ti ti-chevron-down"></i></span>
+							</div>
+						</template>
+					</TransitionGroup>
+				</div>
+
+				<div v-if="user && (!user.canChat || user.host !== null)">
+					<MkInfo warn>{{ i18n.ts._chat.chatNotAvailableInOtherAccount }}</MkInfo>
+				</div>
+
+				<MkInfo v-if="$i.policies.chatAvailability !== 'available'" warn>{{ $i.policies.chatAvailability === 'readonly' ? i18n.ts._chat.chatIsReadOnlyForThisAccountOrServer : i18n.ts._chat.chatNotAvailableForThisAccountOrServer }}</MkInfo>
 			</div>
 		</div>
-	</template>
-</PageWithHeader>
+
+		<div v-else-if="tab === 'search'" class="_spacer" style="--MI_SPACER-w: 700px;">
+			<XSearch :userId="userId" :roomId="roomId"/>
+		</div>
+
+		<div v-else-if="tab === 'members'" class="_spacer" style="--MI_SPACER-w: 700px;">
+			<XMembers v-if="room != null" :room="room" @inviteUser="inviteUser"/>
+		</div>
+
+		<div v-else-if="tab === 'info'" class="_spacer" style="--MI_SPACER-w: 700px;">
+			<XInfo v-if="room != null" :room="room"/>
+		</div>
+
+	</PageWithHeader>
+	<div v-if="tab === 'chat'" :class="$style.footer">
+		<div class="_gaps">
+			<Transition name="fade">
+				<div v-show="showIndicator" :class="$style.new">
+					<button class="_buttonPrimary" :class="$style.newButton" @click="onIndicatorClick">
+						<i class="fas ti-fw fa-arrow-circle-down" :class="$style.newIcon"></i>{{ i18n.ts._chat.newMessage }}
+					</button>
+				</div>
+			</Transition>
+			<XForm v-if="initialized" :user="user" :room="room" :class="$style.form"/>
+		</div>
+	</div>
+</div>
 </template>
 
 <script lang="ts" setup>
@@ -450,6 +450,12 @@ const headerActions = computed<PageHeaderItem[]>(() => [{
 	handler: showMenu,
 }]);
 
+const headerLeadingActions = computed<PageHeaderItem[]>(() => [{
+	icon: 'ti ti-arrow-left',
+	text: i18n.ts.goBack,
+	handler: () => router.push('/chat'),
+}]);
+
 definePage(computed(() => {
 	if (initialized.value) {
 		if (user.value) {
@@ -492,6 +498,21 @@ definePage(computed(() => {
 }
 
 .root {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	min-height: 0;
+	overflow: hidden;
+}
+
+.conversation {
+	flex: 1 1 0;
+	height: auto;
+	min-height: 0;
+	// PageWithHeader's 100cqh must exclude the composer below it.
+	container-type: size;
+	// Match RouterView's Safari containment workaround.
+	contain: size style paint;
 }
 
 .more {
@@ -499,8 +520,11 @@ definePage(computed(() => {
 }
 
 .footer {
+	flex-shrink: 0;
 	width: 100%;
 	padding-top: 8px;
+	padding-bottom: env(safe-area-inset-bottom, 0px);
+	background: var(--MI_THEME-panel);
 }
 
 .new {
@@ -521,10 +545,6 @@ definePage(computed(() => {
 .newIcon {
 	display: inline-block;
 	margin-right: 8px;
-}
-
-.footer {
-
 }
 
 .form {

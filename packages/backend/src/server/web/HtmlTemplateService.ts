@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
+import { collectViteAssets } from './vite-assets.js';
 import { resolve } from 'node:path';
 import { promises as fsp } from 'node:fs';
 import { languages } from 'i18n/const';
@@ -42,58 +43,6 @@ export class HtmlTemplateService {
 		this.frontendEmbedViteBuilt = resolve(this.config.rootDir, 'built/_frontend_embed_vite_');
 	}
 
-	// 初期ロードで読み込むべきファイルのパスを収集する。
-	// See https://ja.vite.dev/guide/backend-integration
-	@bindThis
-	private collectViteAssetFiles(manifest: Manifest): ViteFiles {
-		const entryFile = Object.values(manifest).find((chunk) => chunk.isEntry);
-		if (!entryFile) return {
-			entryJs: null,
-			css: [],
-			modulePreloads: [],
-		};
-
-		const seenChunkIds = new Set<string>();
-		const cssFiles = new Set<string>();
-		const modulePreloads = new Set<string>();
-
-		if (entryFile.css) {
-			entryFile.css.forEach((css) => cssFiles.add(css));
-		}
-
-		if (entryFile.imports != null && Array.isArray(entryFile.imports)) {
-			function collectImports(imports: string[], recursive = false) {
-				for (const importId of imports) {
-					if (seenChunkIds.has(importId)) continue;
-					seenChunkIds.add(importId);
-
-					const importedChunk = manifest[importId];
-					if (!importedChunk) return;
-
-					if (importedChunk.css) {
-						importedChunk.css.forEach((css) => cssFiles.add(css));
-					}
-
-					if (importedChunk.imports != null && Array.isArray(importedChunk.imports)) {
-						collectImports(importedChunk.imports, true);
-					}
-
-					if (!recursive) {
-						modulePreloads.add(importedChunk.file);
-					}
-				}
-			}
-
-			collectImports(entryFile.imports);
-		}
-
-		return {
-			entryJs: entryFile.file,
-			css: Array.from(cssFiles),
-			modulePreloads: Array.from(modulePreloads),
-		};
-	}
-
 	@bindThis
 	private async prepareFrontendAssets() {
 		if (this.frontendAssetsFetched) return;
@@ -125,7 +74,7 @@ export class HtmlTemplateService {
 		}
 
 		if (feViteManifest != null) {
-			this.frontendViteFiles = this.collectViteAssetFiles(feViteManifest);
+			this.frontendViteFiles = collectViteAssets(feViteManifest);
 		}
 
 		if (bootJs != null) {
@@ -137,7 +86,7 @@ export class HtmlTemplateService {
 		}
 
 		if (embedFeViteManifest != null) {
-			this.frontendEmbedViteFiles = this.collectViteAssetFiles(embedFeViteManifest);
+			this.frontendEmbedViteFiles = collectViteAssets(embedFeViteManifest);
 		}
 
 		if (embedBootJs != null) {
@@ -157,7 +106,7 @@ export class HtmlTemplateService {
 			version: this.config.version,
 			config: this.config,
 			langs: [...languages],
-			instanceName: this.meta.name ?? 'Misskey',
+			instanceName: this.meta.name ?? 'PUBO',
 			icon: this.meta.iconUrl,
 			appleTouchIcon: this.meta.app512IconUrl,
 			themeColor: this.meta.themeColor,

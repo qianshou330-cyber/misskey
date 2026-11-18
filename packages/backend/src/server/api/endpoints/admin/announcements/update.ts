@@ -7,7 +7,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Endpoint } from '@/server/api/endpoint-base.js';
 import type { AnnouncementsRepository } from '@/models/_.js';
 import { DI } from '@/di-symbols.js';
-import { AnnouncementService } from '@/core/AnnouncementService.js';
+import { AnnouncementService, InvalidMarqueeAnnouncementError } from '@/core/AnnouncementService.js';
 import { ApiError } from '../../../error.js';
 
 export const meta = {
@@ -23,6 +23,11 @@ export const meta = {
 			code: 'NO_SUCH_ANNOUNCEMENT',
 			id: 'd3aae5a7-6372-4cb4-b61c-f511ffc2d7cc',
 		},
+		invalidMarqueeAnnouncement: {
+			message: 'Marquee announcements must be global.',
+			code: 'INVALID_MARQUEE_ANNOUNCEMENT',
+			id: 'f19f65e7-80b6-451a-9bd0-ef4b59e05b20',
+		},
 	},
 } as const;
 
@@ -34,7 +39,7 @@ export const paramDef = {
 		text: { type: 'string', minLength: 1 },
 		imageUrl: { type: 'string', nullable: true, minLength: 0 },
 		icon: { type: 'string', enum: ['info', 'warning', 'error', 'success'] },
-		display: { type: 'string', enum: ['normal', 'banner', 'dialog'] },
+		display: { type: 'string', enum: ['normal', 'banner', 'dialog', 'marquee'] },
 		forExistingUsers: { type: 'boolean' },
 		silence: { type: 'boolean' },
 		needConfirmationToRead: { type: 'boolean' },
@@ -60,15 +65,17 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				updatedAt: new Date(),
 				title: ps.title,
 				text: ps.text,
-				/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- 空の文字列の場合、nullを渡すようにするため */
-				imageUrl: ps.imageUrl || null,
+				imageUrl: ps.imageUrl,
 				display: ps.display,
 				icon: ps.icon,
 				forExistingUsers: ps.forExistingUsers,
 				silence: ps.silence,
 				needConfirmationToRead: ps.needConfirmationToRead,
 				isActive: ps.isActive,
-			}, me);
+			}, me).catch(err => {
+				if (err instanceof InvalidMarqueeAnnouncementError) throw new ApiError(meta.errors.invalidMarqueeAnnouncement);
+				throw err;
+			});
 		});
 	}
 }

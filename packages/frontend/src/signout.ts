@@ -10,9 +10,13 @@ import { waiting } from '@/os.js';
 import { unisonReload } from '@/utility/unison-reload.js';
 import { clear } from '@/utility/idb-proxy.js';
 import { $i } from '@/i.js';
+import { clearChatOutboxAccount } from '@/utility/chat-outbox-storage.js';
+import { cancelNativeDownload } from '@/utility/native-download.js';
 
 export async function signout() {
+	cancelNativeDownload();
 	if (!$i) return;
+	clearChatOutboxAccount($i.id);
 
 	waiting();
 

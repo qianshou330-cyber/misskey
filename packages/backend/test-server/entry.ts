@@ -25,6 +25,7 @@ export async function setup() {
 	console.log('starting application...');
 
 	app = await NestFactory.createApplicationContext(MainModule, {
+		abortOnError: false,
 		logger: new NestLogger(),
 	});
 	serverService = app.get(ServerService);
@@ -93,6 +94,7 @@ async function startControllerEndpoints(port = config.port + 1000) {
 		console.log('starting application...');
 
 		app = await NestFactory.createApplicationContext(MainModule, {
+			abortOnError: false,
 			logger: new NestLogger(),
 		});
 		serverService = app.get(ServerService);

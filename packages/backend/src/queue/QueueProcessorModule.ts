@@ -6,8 +6,11 @@
 import { Module } from '@nestjs/common';
 import { CoreModule } from '@/core/CoreModule.js';
 import { GlobalModule } from '@/GlobalModule.js';
+import { NativePushProcessorService } from './processors/NativePushProcessorService.js';
 import { QueueLoggerService } from './QueueLoggerService.js';
 import { QueueProcessorService } from './QueueProcessorService.js';
+import { MusicChartQueueService } from './MusicChartQueueService.js';
+import { KpopMusicChartQueueService } from './KpopMusicChartQueueService.js';
 import { DeliverProcessorService } from './processors/DeliverProcessorService.js';
 import { EndedPollNotificationProcessorService } from './processors/EndedPollNotificationProcessorService.js';
 import { PostScheduledNoteProcessorService } from './processors/PostScheduledNoteProcessorService.js';
@@ -51,6 +54,7 @@ import { RelationshipProcessorService } from './processors/RelationshipProcessor
 	],
 	providers: [
 		QueueLoggerService,
+		NativePushProcessorService,
 		TickChartsProcessorService,
 		ResyncChartsProcessorService,
 		CleanChartsProcessorService,
@@ -88,6 +92,8 @@ import { RelationshipProcessorService } from './processors/RelationshipProcessor
 		CheckModeratorsActivityProcessorService,
 		CleanRemoteNotesProcessorService,
 		QueueProcessorService,
+		MusicChartQueueService,
+		KpopMusicChartQueueService,
 	],
 	exports: [
 		QueueProcessorService,

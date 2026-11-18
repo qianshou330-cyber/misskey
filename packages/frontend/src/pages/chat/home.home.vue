@@ -9,7 +9,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 	<MkInfo v-else>{{ $i.policies.chatAvailability === 'readonly' ? i18n.ts._chat.chatIsReadOnlyForThisAccountOrServer : i18n.ts._chat.chatNotAvailableForThisAccountOrServer }}</MkInfo>
 
-	<MkAd :preferForms="['horizontal', 'horizontal-big']"/>
+	<MkA to="/chat/contacts"><i class="ti ti-users"></i> {{ i18n.ts._chatPro.contacts }}</MkA>
+	<MkAd :prefer="['horizontal', 'horizontal-big']"/>
 
 	<MkInput
 		v-model="searchQuery"
@@ -40,9 +41,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { onActivated, onDeactivated, onMounted, ref } from 'vue';
+import { ref } from 'vue';
 import * as Misskey from 'misskey-js';
-import { useInterval } from '@@/js/use-interval.js';
 import XMessage from './XMessage.vue';
 import MkButton from '@/components/MkButton.vue';
 import { i18n } from '@/i18n.js';
@@ -50,7 +50,6 @@ import { misskeyApi } from '@/utility/misskey-api.js';
 import { ensureSignin } from '@/i.js';
 import { useRouter } from '@/router.js';
 import * as os from '@/os.js';
-import { updateCurrentAccountPartial } from '@/accounts.js';
 import MkInput from '@/components/MkInput.vue';
 import MkFoldableSection from '@/components/MkFoldableSection.vue';
 import MkInfo from '@/components/MkInfo.vue';
@@ -121,9 +120,6 @@ async function search() {
 	searched.value = true;
 }
 
-onMounted(() => {
-	updateCurrentAccountPartial({ hasUnreadChatMessages: false });
-});
 </script>
 
 <style lang="scss" module>

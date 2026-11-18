@@ -100,8 +100,13 @@ const mock = inject(DI.mock, false);
 }
 
 .badgeRole {
-	height: 1.3em;
+	height: 1em;
 	vertical-align: -20%;
+
+	&[src="/client-assets/verified-blue.png"] {
+		height: 0.85em;
+		vertical-align: -0.1em;
+	}
 
 	& + .badgeRole {
 		margin-left: 0.2em;

@@ -6,7 +6,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 <template>
 <SearchMarker path="/settings/preferences" :label="i18n.ts.preferences" :keywords="['general', 'preferences']" icon="ti ti-adjustments">
 	<div class="_gaps_m">
-		<MkFeatureBanner icon="/client-assets/gear_3d.png" color="#00ff9d">
+		<MkFeatureBanner icon="/fluent-emoji/2699.png" color="#00ff9d">
 			<SearchText>{{ i18n.ts._settings.preferencesBanner }}</SearchText>
 		</MkFeatureBanner>
 
@@ -491,7 +491,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<template #icon><SearchIcon><i class="ti ti-accessible"></i></SearchIcon></template>
 
 					<div class="_gaps_m">
-						<MkFeatureBanner icon="/client-assets/mens_room_3d.png" color="#0011ff">
+						<MkFeatureBanner icon="/fluent-emoji/1f6b9.png" color="#0011ff">
 							<SearchText>{{ i18n.ts._settings.accessibilityBanner }}</SearchText>
 						</MkFeatureBanner>
 
@@ -962,6 +962,8 @@ const fontSize = ref(miLocalStorage.getItem('fontSize') as '1' | '2' | '3' | nul
 const useSystemFont = ref(miLocalStorage.getItem('useSystemFont') != null);
 
 watch(lang, () => {
+	// An explicit choice must also survive the first updated loader in another tab.
+	miLocalStorage.setItem('puboDefaultLanguageVersion', '1');
 	miLocalStorage.setItem('lang', lang.value as string);
 });
 

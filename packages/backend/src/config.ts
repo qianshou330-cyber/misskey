@@ -9,9 +9,12 @@ import { dirname, resolve } from 'node:path';
 import { type FastifyServerOptions } from 'fastify';
 import type * as Sentry from '@sentry/node';
 import type * as SentryVue from '@sentry/vue';
-import type { RedisOptions } from 'ioredis';
+import type { RedisOptions as IoRedisRedisOptions } from 'ioredis';
+import type { RedisOptions as BullMqRedisOptions } from 'bullmq';
+import type { NativePushConfig } from '@/misc/native-push.js';
+import type { AccessLogConfiguration, LogFormat, LogLevelSetting } from './logging/types.js';
 
-type RedisOptionsSource = Partial<RedisOptions> & {
+type RedisOptionsRequiredFields = {
 	host: string;
 	port: number;
 	family?: number;
@@ -19,11 +22,27 @@ type RedisOptionsSource = Partial<RedisOptions> & {
 	db?: number;
 	prefix?: string;
 };
+type RedisOptionsSource = Partial<IoRedisRedisOptions & BullMqRedisOptions> & RedisOptionsRequiredFields;
+type RedisOptionsResolved = IoRedisRedisOptions & BullMqRedisOptions & RedisOptionsRequiredFields;
+
+type SentryBackendConfig = {
+	options: Partial<Sentry.NodeOptions>;
+	enableNodeProfiling: boolean;
+	disabledIntegrations?: string[];
+};
+
+export type SnakeGameConfig = {
+	enabled?: boolean;
+	ticketSecretFile?: string;
+	enabledFile?: string;
+};
 
 /**
  * 設定ファイルの型
  */
 type Source = {
+	snakeGame?: SnakeGameConfig;
+	nativePush?: NativePushConfig;
 	url?: string;
 	port?: number;
 	socket?: string;
@@ -64,7 +83,7 @@ type Source = {
 		index: string;
 		scope?: 'local' | 'global' | string[];
 	};
-	sentryForBackend?: { options: Partial<Sentry.NodeOptions>; enableNodeProfiling: boolean; };
+	sentryForBackend?: SentryBackendConfig;
 	sentryForFrontend?: {
 		options: Partial<SentryVue.BrowserOptions> & { dsn: string };
 		vueIntegration?: SentryVue.VueIntegrationOptions | null;
@@ -110,6 +129,10 @@ type Source = {
 	pidFile: string;
 
 	logging?: {
+		format?: LogFormat;
+		level?: LogLevelSetting;
+		domains?: Record<string, LogLevelSetting> | null;
+		access?: AccessLogConfiguration;
 		sql?: {
 			disableQueryTruncation?: boolean,
 			enableQueryParamLogging?: boolean,
@@ -118,6 +141,8 @@ type Source = {
 };
 
 export type Config = {
+	snakeGame?: SnakeGameConfig;
+	nativePush?: NativePushConfig;
 	url: string;
 	port: number;
 	socket: string | undefined;
@@ -172,6 +197,10 @@ export type Config = {
 	deliverJobMaxAttempts: number | undefined;
 	inboxJobMaxAttempts: number | undefined;
 	logging?: {
+		format?: LogFormat;
+		level?: LogLevelSetting;
+		domains?: Record<string, LogLevelSetting> | null;
+		access?: AccessLogConfiguration;
 		sql?: {
 			disableQueryTruncation?: boolean,
 			enableQueryParamLogging?: boolean,
@@ -196,12 +225,12 @@ export type Config = {
 	mediaProxy: string;
 	externalMediaProxyEnabled: boolean;
 	videoThumbnailGenerator: string | null;
-	redis: RedisOptions & RedisOptionsSource;
-	redisForPubsub: RedisOptions & RedisOptionsSource;
-	redisForJobQueue: RedisOptions & RedisOptionsSource;
-	redisForTimelines: RedisOptions & RedisOptionsSource;
-	redisForReactions: RedisOptions & RedisOptionsSource;
-	sentryForBackend: { options: Partial<Sentry.NodeOptions>; enableNodeProfiling: boolean; } | undefined;
+	redis: RedisOptionsResolved;
+	redisForPubsub: RedisOptionsResolved;
+	redisForJobQueue: RedisOptionsResolved;
+	redisForTimelines: RedisOptionsResolved;
+	redisForReactions: RedisOptionsResolved;
+	sentryForBackend: SentryBackendConfig | undefined;
 	sentryForFrontend: {
 		options: Partial<SentryVue.BrowserOptions> & { dsn: string };
 		vueIntegration?: SentryVue.VueIntegrationOptions | null;
@@ -272,6 +301,8 @@ export function loadConfig(): Config {
 
 	return {
 		version,
+		snakeGame: resolveSnakeGameConfig(config.snakeGame),
+		nativePush: config.nativePush,
 		publishTarballInsteadOfProvideRepositoryUrl: !!config.publishTarballInsteadOfProvideRepositoryUrl,
 		setupPassword: config.setupPassword,
 		url: url.origin,
@@ -343,6 +374,15 @@ export function loadConfig(): Config {
 	};
 }
 
+/** Explicit deployment overrides leave the existing private YAML unchanged. */
+export function resolveSnakeGameConfig(source?: SnakeGameConfig, env: NodeJS.ProcessEnv = process.env): SnakeGameConfig {
+	return {
+		enabled: env.PUBO_SNAKE_ENABLED !== undefined ? env.PUBO_SNAKE_ENABLED === 'true' : source?.enabled === true,
+		ticketSecretFile: env.PUBO_SNAKE_TICKET_SECRET_FILE ?? source?.ticketSecretFile,
+		enabledFile: env.PUBO_SNAKE_ENABLED_FILE ?? source?.enabledFile,
+	};
+}
+
 function tryCreateUrl(url: string) {
 	try {
 		return new URL(url);
@@ -351,7 +391,7 @@ function tryCreateUrl(url: string) {
 	}
 }
 
-function convertRedisOptions(options: RedisOptionsSource, host: string): RedisOptions & RedisOptionsSource {
+function convertRedisOptions(options: RedisOptionsSource, host: string): RedisOptionsResolved {
 	return {
 		...options,
 		password: options.pass,

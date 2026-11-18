@@ -27,9 +27,9 @@ import { makeHotkey } from '@/utility/hotkey.js';
 import { addCustomEmoji, removeCustomEmojis, updateCustomEmojis } from '@/custom-emojis.js';
 import { prefer } from '@/preferences.js';
 import { updateCurrentAccountPartial } from '@/accounts.js';
-import { migrateOldSettings } from '@/pref-migrate.js';
 import { unisonReload } from '@/utility/unison-reload.js';
 import { isBirthday } from '@/utility/is-birthday.js';
+import { refreshChatSummary } from '@/utility/chat-summary.js';
 
 export async function mainBoot() {
 	const { isClientUpdated, lastVersion } = await common(async () => {
@@ -69,14 +69,6 @@ export async function mainBoot() {
 		const { dispose } = popup(defineAsyncComponent(() => import('@/components/MkUpdated.vue')), {}, {
 			closed: () => dispose(),
 		});
-
-		// prefereces migration
-		// TODO: そのうち消す
-		if (lastVersion && (compareVersions('2025.3.2-alpha.0', lastVersion) === 1)) {
-			console.log('Preferences migration');
-
-			migrateOldSettings();
-		}
 	}
 
 	try {
@@ -283,16 +275,6 @@ export async function mainBoot() {
 		//}
 		//miLocalStorage.setItem('lastUsed', Date.now().toString());
 
-		const latestDonationInfoShownAt = miLocalStorage.getItem('latestDonationInfoShownAt');
-		const neverShowDonationInfo = miLocalStorage.getItem('neverShowDonationInfo');
-		if (neverShowDonationInfo !== 'true' && (createdAt.getTime() < (Date.now() - (1000 * 60 * 60 * 24 * 3))) && !window.location.pathname.startsWith('/miauth')) {
-			if (latestDonationInfoShownAt == null || (new Date(latestDonationInfoShownAt).getTime() < (Date.now() - (1000 * 60 * 60 * 24 * 30)))) {
-				const { dispose } = popup(defineAsyncComponent(() => import('@/components/MkDonation.vue')), {}, {
-					closed: () => dispose(),
-				});
-			}
-		}
-
 		const modifiedVersionMustProminentlyOfferInAgplV3Section13Read = miLocalStorage.getItem('modifiedVersionMustProminentlyOfferInAgplV3Section13Read');
 		if (modifiedVersionMustProminentlyOfferInAgplV3Section13Read !== 'true' && instance.repositoryUrl !== 'https://github.com/misskey-dev/misskey') {
 			const { dispose } = popup(defineAsyncComponent(() => import('@/components/MkSourceCodeAvailablePopup.vue')), {}, {
@@ -359,9 +341,13 @@ export async function mainBoot() {
 			});
 
 			main.on('newChatMessage', () => {
-				updateCurrentAccountPartial({ hasUnreadChatMessages: true });
 				sound.playMisskeySfx('chatMessage');
+				void refreshChatSummary();
 			});
+			main.on('chatStateChanged', () => { void refreshChatSummary(); });
+			void refreshChatSummary();
+			window.setInterval(() => { void refreshChatSummary(); }, 30_000);
+			window.document.addEventListener('visibilitychange', () => { if (!window.document.hidden) void refreshChatSummary(); });
 
 			main.on('readAllAnnouncements', () => {
 				updateCurrentAccountPartial({ hasUnreadAnnouncement: false });

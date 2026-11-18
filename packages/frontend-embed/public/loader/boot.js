@@ -33,24 +33,16 @@
 
 	//#region Detect language & fetch translations
 	const supportedLangs = LANGS;
+	const languageMigrationKey = 'puboDefaultLanguageVersion';
+	const languageMigrationVersion = '1';
 	/** @type { string } */
 	let lang = localStorage.getItem('lang');
-	if (lang == null || !supportedLangs.includes(lang)) {
-		if (supportedLangs.includes(navigator.language)) {
-			lang = navigator.language;
-		} else {
-			lang = supportedLangs.find(x => x.split('-')[0] === navigator.language);
-
-			// Fallback
-			if (lang == null) lang = 'en-US';
-		}
+	// Keep the same one-time language migration as the main web loader.
+	if (!supportedLangs.includes(lang) || (lang === 'en-US' && localStorage.getItem(languageMigrationKey) !== languageMigrationVersion)) {
+		lang = 'zh-CN';
 	}
-
-	// for https://github.com/misskey-dev/misskey/issues/10202
-	if (lang == null || lang.toString == null || lang.toString() === 'null') {
-		console.error('invalid lang value detected!!!', typeof lang, lang);
-		lang = 'en-US';
-	}
+	localStorage.setItem('lang', lang);
+	localStorage.setItem(languageMigrationKey, languageMigrationVersion);
 	//#endregion
 
 	//#region Script
@@ -71,7 +63,6 @@
 		});
 	}
 
-	localStorage.setItem('lang', lang);
 	//#endregion
 
 	async function addStyle(styleText) {

@@ -70,6 +70,7 @@ export function misskeyApiGet<
 >(
 	endpoint: E,
 	data: P = {} as any,
+	signal?: AbortSignal,
 ): Promise<_ResT> {
 	pendingApiRequestsCount.value++;
 
@@ -85,6 +86,7 @@ export function misskeyApiGet<
 			method: 'GET',
 			credentials: 'omit',
 			cache: 'default',
+			signal,
 		}).then(async (res) => {
 			const body = res.status === 204 ? null : await res.json();
 

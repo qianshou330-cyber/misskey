@@ -86,7 +86,8 @@ const dialog = useTemplateRef('dialog');
 const title = ref(props.announcement ? props.announcement.title : '');
 const text = ref(props.announcement ? props.announcement.text : '');
 const icon = ref(props.announcement ? props.announcement.icon : 'info');
-const display = ref(props.announcement ? props.announcement.display : 'dialog');
+// Homepage marquees cannot be addressed to an individual user.
+const display = ref(props.announcement && props.announcement.display !== 'marquee' ? props.announcement.display : 'dialog');
 const needConfirmationToRead = ref(props.announcement ? props.announcement.needConfirmationToRead : false);
 
 async function done() {

@@ -4,6 +4,7 @@
  */
 
 'use strict';
+/* global window, document, localStorage, console, URL, URLSearchParams, LANGS, CLIENT_ENTRY, CLIENT_PRELOADS, WELCOME_PRELOADS, WELCOME_CSS, ICON_CSS */
 
 // ブロックの中に入れないと、定義した変数がブラウザのグローバルスコープに登録されてしまい邪魔なので
 (async () => {
@@ -24,27 +25,42 @@
 
 	//#region Detect language
 	const supportedLangs = LANGS;
+	const languageMigrationKey = 'puboDefaultLanguageVersion';
+	const languageMigrationVersion = '1';
 	/** @type { string } */
 	let lang = localStorage.getItem('lang');
-	if (lang == null || !supportedLangs.includes(lang)) {
-		if (supportedLangs.includes(navigator.language)) {
-			lang = navigator.language;
-		} else {
-			lang = supportedLangs.find(x => x.split('-')[0] === navigator.language);
-
-			// Fallback
-			if (lang == null) lang = 'en-US';
-		}
-	}
-
-	// for https://github.com/misskey-dev/misskey/issues/10202
-	if (lang == null || lang.toString == null || lang.toString() === 'null') {
-		console.error('invalid lang value detected!!!', typeof lang, lang);
-		lang = 'en-US';
+	// PUBO defaults to Simplified Chinese on every device. Legacy English
+	// preferences are migrated once; subsequent manual choices are preserved.
+	if (!supportedLangs.includes(lang) || (lang === 'en-US' && localStorage.getItem(languageMigrationKey) !== languageMigrationVersion)) {
+		lang = 'zh-CN';
 	}
 
 	localStorage.setItem('lang', lang);
+	// Mark every initial state, including preserved languages, before importing.
+	localStorage.setItem(languageMigrationKey, languageMigrationVersion);
 	//#endregion
+
+	// Discover the selected language's modules before blocking styles are parsed.
+	// Fetch hints do not execute the app; startup still waits for the complete DOM.
+	if (typeof CLIENT_PRELOADS !== 'undefined' && CLIENT_ENTRY) {
+		const hint = (rel, file, as) => {
+			const link = document.createElement('link');
+			link.rel = rel;
+			link.href = `/vite/${file.replace(/^scripts\//, `${lang}/`)}`;
+			if (as) link.as = as;
+			if (rel === 'modulepreload') link.crossOrigin = '';
+			document.head.appendChild(link);
+		};
+		CLIENT_PRELOADS.forEach(file => hint('modulepreload', file));
+		if (ICON_CSS) hint('preload', ICON_CSS, 'style');
+		let meta;
+		try { meta = JSON.parse(document.getElementById('misskey_meta')?.textContent ?? 'null'); } catch { /* Invalid metadata uses the normal recovery UI. */ }
+		if (window.location.pathname === '/' && !localStorage.getItem('account') &&
+			meta?.requireSetup === false && meta?.clientOptions?.entrancePageStyle === 'simple') {
+			WELCOME_PRELOADS.forEach(file => hint('modulepreload', file));
+			WELCOME_CSS.forEach(file => hint('preload', file, 'style'));
+		}
+	}
 
 	//#region Script
 	async function importAppScript() {
@@ -115,9 +131,14 @@
 	if (!isSafeMode) {
 		const customCss = localStorage.getItem('customCss');
 		if (customCss && customCss.length > 0) {
-			const style = document.createElement('style');
-			style.innerHTML = customCss;
-			document.head.appendChild(style);
+			const appendCustomStyle = () => {
+				const style = document.createElement('style');
+				style.innerHTML = customCss;
+				document.head.appendChild(style);
+			};
+			// Keep user overrides after the base styles, even with an early loader.
+			if (document.readyState === 'loading') window.addEventListener('DOMContentLoaded', appendCustomStyle, { once: true });
+			else appendCustomStyle();
 		}
 	}
 

@@ -43,11 +43,12 @@ export class MiAnnouncement {
 	// normal ... お知らせページ掲載
 	// banner ... お知らせページ掲載 + バナー表示
 	// dialog ... お知らせページ掲載 + ダイアログ表示
+	// marquee ... お知らせページ掲載 + ホームのスクロール表示 (全体向け・通知なし)
 	@Column('varchar', {
 		length: 256, nullable: false,
 		default: 'normal',
 	})
-	public display: 'normal' | 'banner' | 'dialog';
+	public display: 'normal' | 'banner' | 'dialog' | 'marquee';
 
 	@Column('boolean', {
 		default: false,

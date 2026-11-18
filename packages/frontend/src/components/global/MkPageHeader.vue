@@ -6,7 +6,12 @@ SPDX-License-Identifier: AGPL-3.0-only
 <template>
 <div v-if="show" ref="el" :class="[$style.root]">
 	<div :class="[$style.upper, { [$style.slim]: narrow, [$style.thin]: thin_ }]">
-		<div v-if="!thin_ && narrow && props.displayMyAvatar && $i" class="_button" @click="openAccountMenu">
+		<div v-if="leadingActions && leadingActions.length > 0" :class="$style.buttons">
+			<template v-for="(action, index) in leadingActions" :key="`${action.icon}-${index}`">
+				<button v-tooltip.noDelay="action.text" type="button" :aria-label="action.text" class="_button" :class="[$style.button, { [$style.highlighted]: action.highlighted }]" @click.stop="action.handler" @touchstart="preventDrag"><i :class="action.icon"></i></button>
+			</template>
+		</div>
+		<div v-else-if="!thin_ && (narrow || deviceKind === 'smartphone') && props.displayMyAvatar && $i" class="_button" @click="openAccountMenu">
 			<MkAvatar :class="$style.avatar" :user="$i"/>
 		</div>
 		<div v-else-if="!thin_ && narrow && !hideTitle" :class="$style.buttons"></div>
@@ -54,6 +59,7 @@ export type PageHeaderProps = {
 	hideTitle?: boolean;
 	canOmitTitle?: boolean;
 	displayMyAvatar?: boolean;
+	leadingActions?: PageHeaderItem[] | null;
 };
 </script>
 
@@ -62,6 +68,7 @@ import { onMounted, onUnmounted, ref, inject, useTemplateRef, computed } from 'v
 import { scrollToTop } from '@@/js/scroll.js';
 import XTabs from './MkPageHeader.tabs.vue';
 import { getAccountMenu } from '@/accounts.js';
+import { deviceKind } from '@/utility/device-kind.js';
 import { $i } from '@/i.js';
 import { DI } from '@/di.js';
 import * as os from '@/os.js';
@@ -85,8 +92,9 @@ const el = useTemplateRef('el');
 const narrow = ref(false);
 const hasTabs = computed(() => props.tabs.length > 0);
 const hasActions = computed(() => props.actions && props.actions.length > 0);
+const hasLeadingActions = computed(() => props.leadingActions && props.leadingActions.length > 0);
 const show = computed(() => {
-	return !hideTitle.value || hasTabs.value || hasActions.value;
+	return !hideTitle.value || hasTabs.value || hasActions.value || hasLeadingActions.value;
 });
 
 const preventDrag = (ev: TouchEvent) => {
@@ -160,10 +168,12 @@ onUnmounted(() => {
 	align-items: center;
 	height: var(--height);
 
-	.tabs:first-child {
+	.tabs:first-child,
+	&:not(.slim) > :not(.titleContainer) ~ .tabs {
 		margin-left: auto;
 		padding: 0 12px;
 	}
+
 	.tabs {
 		margin-right: auto;
 	}

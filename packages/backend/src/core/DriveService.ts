@@ -7,6 +7,7 @@ import { randomUUID } from 'node:crypto';
 import * as fs from 'node:fs';
 import { Inject, Injectable } from '@nestjs/common';
 import sharp from 'sharp';
+import type { Sharp } from 'sharp';
 import { sharpBmp } from '@misskey-dev/sharp-read-bmp';
 import { In, IsNull } from 'typeorm';
 import { DeleteObjectCommandInput, PutObjectCommandInput, NoSuchKey } from '@aws-sdk/client-s3';
@@ -43,6 +44,7 @@ import { correctFilename } from '@/misc/correct-filename.js';
 import { isMimeImage } from '@/misc/is-mime-image.js';
 import { ModerationLogService } from '@/core/ModerationLogService.js';
 import { UtilityService } from '@/core/UtilityService.js';
+import { StorageQuotaExceededError, UserStorageQuotaService } from '@/core/UserStorageQuotaService.js';
 
 type AddFileArgs = {
 	/** User who wish to add file */
@@ -130,6 +132,7 @@ export class DriveService {
 		private perUserDriveChart: PerUserDriveChart,
 		private instanceChart: InstanceChart,
 		private utilityService: UtilityService,
+		private userStorageQuotaService: UserStorageQuotaService,
 	) {
 		const logger = new Logger('drive', 'blue');
 		this.registerLogger = logger.createSubLogger('register', 'yellow');
@@ -146,7 +149,10 @@ export class DriveService {
 	 * @param size Size for original
 	 */
 	@bindThis
-	private async save(file: MiDriveFile, path: string, name: string, type: string, hash: string, size: number): Promise<MiDriveFile> {
+	private async save(file: MiDriveFile, path: string, name: string, type: string, hash: string, size: number, reservation: string | null = null): Promise<MiDriveFile> {
+		const persist = () => reservation == null
+			? this.driveFilesRepository.insertOne(file)
+			: this.userStorageQuotaService.commit(file.userId!, reservation, size, manager => manager.getRepository(MiDriveFile).save(file));
 	// thunbnail, webpublic を必要なら生成
 		const alts = await this.generateAlts(path, type, !file.uri);
 
@@ -222,7 +228,7 @@ export class DriveService {
 			file.size = size;
 			file.storedInternal = false;
 
-			return await this.driveFilesRepository.insertOne(file);
+			return await persist();
 		} else { // use internal storage
 			const accessKey = randomUUID();
 			const thumbnailAccessKey = 'thumbnail-' + randomUUID();
@@ -256,7 +262,7 @@ export class DriveService {
 			file.md5 = hash;
 			file.size = size;
 
-			return await this.driveFilesRepository.insertOne(file);
+			return await persist();
 		}
 	}
 
@@ -300,7 +306,7 @@ export class DriveService {
 			};
 		}
 
-		let img: sharp.Sharp | null = null;
+		let img: Sharp | null = null;
 		let satisfyWebpublic: boolean;
 		let isAnimated: boolean;
 
@@ -542,7 +548,7 @@ export class DriveService {
 					}
 				}
 
-				const usage = await this.driveFileEntityService.calcDriveUsageOf(user);
+				const usage = (await this.userStorageQuotaService.usage(user.id)).total;
 
 				this.registerLogger.debug('drive capacity override applied');
 				this.registerLogger.debug(`overrideCap: ${driveCapacity}bytes, usage: ${usage}bytes, u+s: ${usage + info.size}bytes`);
@@ -654,7 +660,26 @@ export class DriveService {
 				}
 			}
 		} else {
-			file = await (this.save(file, path, detectedName, info.type.mime, info.md5, info.size));
+			let reservation: string | null = null;
+			try {
+				if (user && this.userEntityService.isLocalUser(user) && !await this.roleService.isModerator(user)) {
+					reservation = await this.userStorageQuotaService.reserve(user.id, info.size);
+				}
+				file = await this.save(file, path, detectedName, info.type.mime, info.md5, info.size, reservation);
+			} catch (error) {
+				if (error instanceof StorageQuotaExceededError) {
+					// A long upload may outlive its lease. Never publish uncharged bytes.
+					for (const key of [file.accessKey, file.thumbnailAccessKey, file.webpublicAccessKey]) {
+						if (!key) continue;
+						if (file.storedInternal) this.internalStorageService.del(key);
+						else await this.deleteObjectStorageFile(key);
+					}
+					throw new IdentifiableError('c6244ed2-a39a-4e1c-bf93-f0fbd7764fa6', 'No free space.');
+				}
+				throw error;
+			} finally {
+				await this.userStorageQuotaService.release(reservation);
+			}
 		}
 
 		this.registerLogger.succ(`drive file has been created ${file.id}`);

@@ -1,14 +1,12 @@
 # syntax = docker/dockerfile:1.23
 
-ARG NODE_VERSION=22.22.2-bookworm
+ARG NODE_VERSION=26.4.0-trixie
 
 # build assets & compile TypeScript
 
-FROM --platform=$BUILDPLATFORM node:${NODE_VERSION} AS native-builder
+FROM node:${NODE_VERSION} AS native-builder
 
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-	--mount=type=cache,target=/var/lib/apt,sharing=locked \
-	rm -f /etc/apt/apt.conf.d/docker-clean \
+RUN 	rm -f /etc/apt/apt.conf.d/docker-clean \
 	; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache \
 	&& apt-get update \
 	&& apt-get install -yqq --no-install-recommends \
@@ -16,37 +14,35 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 
 WORKDIR /misskey
 
-COPY --link ["pnpm-lock.yaml", "pnpm-workspace.yaml", "package.json", "./"]
-COPY --link ["scripts", "./scripts"]
-COPY --link ["patches", "./patches"]
-COPY --link ["packages/backend/package.json", "./packages/backend/"]
-COPY --link ["packages/frontend-shared/package.json", "./packages/frontend-shared/"]
-COPY --link ["packages/frontend/package.json", "./packages/frontend/"]
-COPY --link ["packages/frontend-embed/package.json", "./packages/frontend-embed/"]
-COPY --link ["packages/frontend-builder/package.json", "./packages/frontend-builder/"]
-COPY --link ["packages/i18n/package.json", "./packages/i18n/"]
-COPY --link ["packages/icons-subsetter/package.json", "./packages/icons-subsetter/"]
-COPY --link ["packages/sw/package.json", "./packages/sw/"]
-COPY --link ["packages/misskey-js/package.json", "./packages/misskey-js/"]
-COPY --link ["packages/misskey-reversi/package.json", "./packages/misskey-reversi/"]
-COPY --link ["packages/misskey-bubble-game/package.json", "./packages/misskey-bubble-game/"]
+COPY ["pnpm-lock.yaml", "pnpm-workspace.yaml", "package.json", "./"]
+COPY ["scripts", "./scripts"]
+COPY ["patches", "./patches"]
+COPY ["packages/backend/package.json", "./packages/backend/"]
+COPY ["packages/frontend-shared/package.json", "./packages/frontend-shared/"]
+COPY ["packages/frontend/package.json", "./packages/frontend/"]
+COPY ["packages/frontend-embed/package.json", "./packages/frontend-embed/"]
+COPY ["packages/frontend-builder/package.json", "./packages/frontend-builder/"]
+COPY ["packages/i18n/package.json", "./packages/i18n/"]
+COPY ["packages/icons-subsetter/package.json", "./packages/icons-subsetter/"]
+COPY ["packages/sw/package.json", "./packages/sw/"]
+COPY ["packages/misskey-js/package.json", "./packages/misskey-js/"]
+COPY ["packages/misskey-reversi/package.json", "./packages/misskey-reversi/"]
+COPY ["packages/misskey-bubble-game/package.json", "./packages/misskey-bubble-game/"]
 
 ARG NODE_ENV=production
 
 RUN node -e "console.log(JSON.parse(require('node:fs').readFileSync('./package.json')).packageManager)" | xargs npm install -g
 
-RUN --mount=type=cache,target=/root/.local/share/pnpm/store,sharing=locked \
-	pnpm i --frozen-lockfile --aggregate-output
+RUN pnpm i --frozen-lockfile --aggregate-output
 
-COPY --link . ./
+COPY . ./
 
-RUN git submodule update --init
 RUN pnpm build
 RUN rm -rf .git/
 
 # build native dependencies for target platform
 
-FROM --platform=$TARGETPLATFORM node:${NODE_VERSION} AS target-builder
+FROM node:${NODE_VERSION} AS target-builder
 
 RUN apt-get update \
 	&& apt-get install -yqq --no-install-recommends \
@@ -54,22 +50,21 @@ RUN apt-get update \
 
 WORKDIR /misskey
 
-COPY --link ["pnpm-lock.yaml", "pnpm-workspace.yaml", "package.json", "./"]
-COPY --link ["scripts", "./scripts"]
-COPY --link ["patches", "./patches"]
-COPY --link ["packages/backend/package.json", "./packages/backend/"]
-COPY --link ["packages/misskey-js/package.json", "./packages/misskey-js/"]
-COPY --link ["packages/misskey-reversi/package.json", "./packages/misskey-reversi/"]
-COPY --link ["packages/misskey-bubble-game/package.json", "./packages/misskey-bubble-game/"]
+COPY ["pnpm-lock.yaml", "pnpm-workspace.yaml", "package.json", "./"]
+COPY ["scripts", "./scripts"]
+COPY ["patches", "./patches"]
+COPY ["packages/backend/package.json", "./packages/backend/"]
+COPY ["packages/misskey-js/package.json", "./packages/misskey-js/"]
+COPY ["packages/misskey-reversi/package.json", "./packages/misskey-reversi/"]
+COPY ["packages/misskey-bubble-game/package.json", "./packages/misskey-bubble-game/"]
 
 ARG NODE_ENV=production
 
 RUN node -e "console.log(JSON.parse(require('node:fs').readFileSync('./package.json')).packageManager)" | xargs npm install -g
 
-RUN --mount=type=cache,target=/root/.local/share/pnpm/store,sharing=locked \
-	pnpm i --frozen-lockfile --aggregate-output
+RUN pnpm i --frozen-lockfile --aggregate-output
 
-FROM --platform=$TARGETPLATFORM node:${NODE_VERSION}-slim AS runner
+FROM node:${NODE_VERSION}-slim AS runner
 
 ARG UID="991"
 ARG GID="991"
@@ -78,7 +73,7 @@ ENV PNPM_CONFIG_VERIFY_DEPS_BEFORE_RUN=false
 
 RUN apt-get update \
 	&& apt-get install -y --no-install-recommends \
-	ffmpeg tini curl libjemalloc-dev libjemalloc2 \
+	ffmpeg tini curl ca-certificates clamav clamav-freshclam libjemalloc-dev libjemalloc2 \
 	&& ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so \
 	&& groupadd -g "${GID}" misskey \
 	&& useradd -l -u "${UID}" -g "${GID}" -m -d /misskey misskey \
@@ -112,3 +107,5 @@ ENV NODE_ENV=production
 HEALTHCHECK --interval=5s --retries=20 CMD ["/bin/bash", "/misskey/healthcheck.sh"]
 ENTRYPOINT ["/usr/bin/tini", "--"]
 CMD ["pnpm", "run", "migrateandstart"]
+
+

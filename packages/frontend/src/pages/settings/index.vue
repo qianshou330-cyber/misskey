@@ -89,6 +89,11 @@ const menuDef = computed<SuperMenuDef[]>(() => [{
 		to: '/settings/profile',
 		active: currentPage.value?.route.name === 'profile',
 	}, {
+		icon: 'ti ti-badge',
+		text: i18n.ts._verification.title,
+		to: '/settings/verification',
+		active: currentPage.value?.route.name === 'verification',
+	}, {
 		icon: 'ti ti-lock-open',
 		text: i18n.ts.privacy,
 		to: '/settings/privacy',

@@ -14,6 +14,15 @@ import type { SystemWebhookPayload } from '@/core/SystemWebhookService.js';
 import type { UserWebhookPayload } from '@/core/UserWebhookService.js';
 import type httpSignature from '@peertube/http-signature';
 
+export type NativePushJobData = {
+	subscriptionId: string;
+	userId: string;
+	eventId: string;
+	kind: 'notification' | 'chat';
+	apnsId: string;
+	createdAt: number;
+};
+
 export type DeliverJobData = {
 	/** Actor */
 	user: ThinUser;

@@ -8,7 +8,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 	<div :class="$style.body">
 		<div>
 			<button v-click-anime :class="[$style.item, $style.instance]" class="_button" @click="openInstanceMenu">
-				<img :class="$style.instanceIcon" :src="instance.iconUrl ?? '/favicon.ico'" draggable="false"/>
+				<img :class="$style.instanceIcon" :src="instance.iconUrl ?? puboLogo" alt="PUBO" draggable="false"/>
 			</button>
 			<MkA v-click-anime v-tooltip="i18n.ts.timeline" :class="$style.item" :activeClass="$style.active" to="/" exact>
 				<i :class="$style.itemIcon" class="ti ti-home ti-fw"></i>
@@ -58,6 +58,7 @@ import { prefer } from '@/preferences.js';
 import { getAccountMenu } from '@/accounts.js';
 import { $i } from '@/i.js';
 import { getHTMLElementOrNull } from '@/utility/get-dom-node-or-null.js';
+import puboLogo from '/client-assets/pubo-logo.png';
 
 const WINDOW_THRESHOLD = 1400;
 
@@ -198,7 +199,9 @@ onMounted(() => {
 
 .instanceIcon {
 	display: inline-block;
-	width: 24px;
+	width: 48px;
+	height: 30px;
+	object-fit: contain;
 	position: absolute;
 	top: 0;
 	right: 0;

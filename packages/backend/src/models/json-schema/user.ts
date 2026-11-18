@@ -667,6 +667,10 @@ export const packedMeDetailedOnlySchema = {
 			type: 'string',
 			nullable: true, optional: true,
 		},
+		phoneVerified: {
+			type: 'boolean',
+			nullable: false, optional: false,
+		},
 		emailVerified: {
 			type: 'boolean',
 			nullable: true, optional: true,

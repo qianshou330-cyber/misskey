@@ -80,6 +80,8 @@ import { MiUserListMembership } from '@/models/UserListMembership.js';
 import { MiUserMemo } from '@/models/UserMemo.js';
 import { MiUserNotePining } from '@/models/UserNotePining.js';
 import { MiUserPending } from '@/models/UserPending.js';
+import { MiVerificationApplication } from '@/models/VerificationApplication.js';
+import { MiVerificationDocument } from '@/models/VerificationDocument.js';
 import { MiUserProfile } from '@/models/UserProfile.js';
 import { MiUserPublickey } from '@/models/UserPublickey.js';
 import { MiUserSecurityKey } from '@/models/UserSecurityKey.js';
@@ -154,6 +156,8 @@ export {
 	MiUserListMembership,
 	MiUserNotePining,
 	MiUserPending,
+	MiVerificationApplication,
+	MiVerificationDocument,
 	MiUserProfile,
 	MiUserPublickey,
 	MiUserSecurityKey,
@@ -234,6 +238,8 @@ export type UserListFavoritesRepository = Repository<MiUserListFavorite> & MiRep
 export type UserListMembershipsRepository = Repository<MiUserListMembership> & MiRepository<MiUserListMembership>;
 export type UserNotePiningsRepository = Repository<MiUserNotePining> & MiRepository<MiUserNotePining>;
 export type UserPendingsRepository = Repository<MiUserPending> & MiRepository<MiUserPending>;
+export type VerificationApplicationsRepository = Repository<MiVerificationApplication> & MiRepository<MiVerificationApplication>;
+export type VerificationDocumentsRepository = Repository<MiVerificationDocument> & MiRepository<MiVerificationDocument>;
 export type UserProfilesRepository = Repository<MiUserProfile> & MiRepository<MiUserProfile>;
 export type UserPublickeysRepository = Repository<MiUserPublickey> & MiRepository<MiUserPublickey>;
 export type UserSecurityKeysRepository = Repository<MiUserSecurityKey> & MiRepository<MiUserSecurityKey>;

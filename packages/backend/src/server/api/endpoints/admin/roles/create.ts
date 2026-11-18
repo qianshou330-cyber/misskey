@@ -67,7 +67,23 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		private roleService: RoleService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
-			const created = await this.roleService.create(ps, me);
+			const created = await this.roleService.create({
+				name: ps.name,
+				description: ps.description,
+				color: ps.color,
+				iconUrl: ps.iconUrl,
+				target: ps.target,
+				condFormula: ps.condFormula,
+				isPublic: ps.isPublic,
+				isModerator: ps.isModerator,
+				isAdministrator: ps.isAdministrator,
+				isExplorable: ps.isExplorable,
+				asBadge: ps.asBadge,
+				preserveAssignmentOnMoveAccount: ps.preserveAssignmentOnMoveAccount,
+				canEditMembersByModerator: ps.canEditMembersByModerator,
+				displayOrder: ps.displayOrder,
+				policies: ps.policies,
+			}, me);
 
 			return await this.roleEntityService.pack(created, me);
 		});
